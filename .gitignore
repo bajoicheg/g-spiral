@@ -1,0 +1,13 @@
+.vs/
+.idea/
+*.user
+*.suo
+bin/
+obj/
+artifacts/
+TestResults/
+*.trx
+*.userosscache
+*.sln.docstates
+.superpowers/
+.worktrees/
