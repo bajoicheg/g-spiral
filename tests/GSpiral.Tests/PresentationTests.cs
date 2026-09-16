@@ -103,6 +103,7 @@ public sealed class PresentationTests
         vm.CompanyName = "Changed Company";
         vm.StartCommand.Execute(null);
         vm.AnswerCards[2].IsSelected = true;
+        vm.MarkReportSaved(Path.Combine(Path.GetTempPath(), "old.xlsx"));
         vm.RestartCommand.Execute(null);
 
         Assert.Equal(AppScreen.Start, vm.Screen);
@@ -110,6 +111,42 @@ public sealed class PresentationTests
         Assert.Equal("GRADIENT", vm.CompanyName);
         Assert.Equal(0, vm.TotalSelections);
         Assert.False(vm.SurveyState.IsSelected(0, CultureTypeId.Success));
+        Assert.False(vm.HasSavedReport);
+        Assert.Equal(string.Empty, vm.LastSavedReportPath);
+    }
+
+    [Fact]
+    public void SavedReportState_IsExposedAndBecomesStaleAfterAnswerChange()
+    {
+        var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"));
+        vm.StartCommand.Execute(null);
+        var path = Path.Combine(Path.GetTempPath(), "Spiral_user_DOMAIN_2026-09-16.xlsx");
+
+        vm.MarkReportSaved(path);
+
+        Assert.True(vm.HasSavedReport);
+        Assert.Equal(path, vm.LastSavedReportPath);
+        Assert.Contains(path, vm.SavedReportStatusText, StringComparison.Ordinal);
+
+        vm.AnswerCards[0].IsSelected = true;
+
+        Assert.False(vm.HasSavedReport);
+        Assert.Equal(string.Empty, vm.LastSavedReportPath);
+    }
+
+    [Fact]
+    public void ShellOpenHelper_CreatesShellLaunchesForFileAndContainingFolder()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "g-spiral-shell-test");
+        var path = Path.Combine(directory, "report.xlsx");
+
+        var file = ShellOpenHelper.ForFile(path);
+        var folder = ShellOpenHelper.ForContainingFolder(path);
+
+        Assert.Equal(path, file.FileName);
+        Assert.True(file.UseShellExecute);
+        Assert.Equal(directory, folder.FileName);
+        Assert.True(folder.UseShellExecute);
     }
 
     [Fact]
