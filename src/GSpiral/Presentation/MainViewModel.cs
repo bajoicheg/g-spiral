@@ -26,6 +26,7 @@ public sealed class MainViewModel : ObservableObject
     private int totalSelections;
     private bool hasSelections;
     private bool isEditingIdentity;
+    private string lastSavedReportPath = string.Empty;
 
     public MainViewModel()
         : this(UserIdentityDefaults.Detect())
@@ -153,6 +154,21 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    public string LastSavedReportPath
+    {
+        get => lastSavedReportPath;
+        private set
+        {
+            if (SetProperty(ref lastSavedReportPath, value))
+            {
+                OnPropertyChanged(nameof(HasSavedReport));
+                OnPropertyChanged(nameof(SavedReportStatusText));
+            }
+        }
+    }
+
+    public bool HasSavedReport => !string.IsNullOrWhiteSpace(LastSavedReportPath);
+    public string SavedReportStatusText => HasSavedReport ? $"Последний сохранённый файл: {LastSavedReportPath}" : string.Empty;
     public string StartActionText => IsEditingIdentity ? "Сохранить и вернуться к результатам" : "Начать";
 
     public DateOnly CurrentReportDate => DateOnly.FromDateTime(DateTime.Now);
@@ -173,6 +189,12 @@ public sealed class MainViewModel : ObservableObject
     public ICommand BackToAnswersCommand { get; }
     public ICommand EditIdentityCommand { get; }
 
+    public void MarkReportSaved(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        LastSavedReportPath = path;
+    }
+
     private bool CanStart() =>
         !string.IsNullOrWhiteSpace(RespondentName) &&
         !string.IsNullOrWhiteSpace(CompanyName);
@@ -187,6 +209,7 @@ public sealed class MainViewModel : ObservableObject
         if (IsEditingIdentity)
         {
             IsEditingIdentity = false;
+            ClearSavedReport();
             RefreshResults();
             Screen = AppScreen.Results;
             return;
@@ -248,6 +271,7 @@ public sealed class MainViewModel : ObservableObject
         Results = Array.Empty<ResultRowViewModel>();
         TotalSelections = 0;
         HasSelections = false;
+        ClearSavedReport();
         Screen = AppScreen.Start;
         NotifySelectionCount();
     }
@@ -267,6 +291,7 @@ public sealed class MainViewModel : ObservableObject
                 selected =>
                 {
                     SurveyState.SetSelected(questionIndex, type.Id, selected);
+                    ClearSavedReport();
                     NotifySelectionCount();
                 }))
             .ToArray();
@@ -280,6 +305,11 @@ public sealed class MainViewModel : ObservableObject
             .ToArray();
         TotalSelections = Results.Sum(x => x.Score);
         HasSelections = TotalSelections > 0;
+    }
+
+    private void ClearSavedReport()
+    {
+        LastSavedReportPath = string.Empty;
     }
 
     private void NotifySelectionCount()
