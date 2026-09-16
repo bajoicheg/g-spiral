@@ -1,3 +1,4 @@
+using GSpiral.Domain;
 using GSpiral.Presentation;
 using GSpiral.Services;
 
@@ -60,7 +61,7 @@ public sealed class PresentationTests
         Assert.Equal(AppScreen.Start, vm.Screen);
         Assert.Equal(string.Empty, vm.CompanyName);
         Assert.Equal(0, vm.TotalSelections);
-        Assert.False(vm.SurveyState.IsSelected(0, Domain.CultureTypeId.Success));
+        Assert.False(vm.SurveyState.IsSelected(0, CultureTypeId.Success));
     }
 
     [Fact]
