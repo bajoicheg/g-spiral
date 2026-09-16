@@ -150,6 +150,8 @@ public sealed class MainViewModel : ObservableObject
             if (SetProperty(ref isEditingIdentity, value))
             {
                 OnPropertyChanged(nameof(StartActionText));
+                OnPropertyChanged(nameof(IdentityScreenTitle));
+                OnPropertyChanged(nameof(IdentityScreenDescription));
             }
         }
     }
@@ -170,6 +172,11 @@ public sealed class MainViewModel : ObservableObject
     public bool HasSavedReport => !string.IsNullOrWhiteSpace(LastSavedReportPath);
     public string SavedReportStatusText => HasSavedReport ? $"Последний сохранённый файл: {LastSavedReportPath}" : string.Empty;
     public string StartActionText => IsEditingIdentity ? "Сохранить и вернуться к результатам" : "Начать";
+    public string IdentityScreenTitle => IsEditingIdentity ? "Изменить данные респондента" : "Кто проходит опрос?";
+    public string IdentityScreenDescription => IsEditingIdentity
+        ? "Изменения применятся к результату и следующему XLSX. Ответы сохранятся."
+        : "Имя и компания определены из Windows. При необходимости их можно исправить перед началом.";
+    public string AppVersionText => $"{AppMetadata.ProductName} {AppMetadata.Version}";
 
     public DateOnly CurrentReportDate => DateOnly.FromDateTime(DateTime.Now);
     public string IdentitySummaryText => $"{RespondentName} · {CompanyName} · {CurrentReportDate:dd.MM.yyyy}";
