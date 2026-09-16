@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'feature/**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore GSpiral.sln
+      - name: Test
+        run: dotnet test GSpiral.sln -c Release --no-restore --logger "trx;LogFileName=test-results.trx"
+      - name: Publish portable single-file EXE
+        run: dotnet publish src/GSpiral/GSpiral.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/publish
+      - name: Smoke test EXE
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "artifacts/publish/G-Spiral.exe" -ArgumentList "--smoke-test" -PassThru
+          if (-not $p.WaitForExit(15000)) { $p.Kill(); throw "Smoke test timed out" }
+          if ($p.ExitCode -ne 0) { throw "Smoke test exit code: $($p.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G-Spiral-win-x64
+          path: artifacts/publish/G-Spiral.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: '**/test-results.trx'
+          if-no-files-found: ignore
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: G-Spiral-win-x64
+          path: artifacts/publish
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/publish/G-Spiral.exe
