@@ -146,7 +146,6 @@ public static class ExcelReportExporter
         }
 
         worksheet.Append(
-            new S.AutoFilter { Reference = "A5:H11" },
             new S.PageMargins { Left = 0.25D, Right = 0.25D, Top = 0.45D, Bottom = 0.45D, Header = 0.2D, Footer = 0.2D },
             new S.PageSetup
             {
@@ -320,8 +319,8 @@ public static class ExcelReportExporter
         var doughnut = new C.DoughnutChart(
             new C.VaryColors { Val = true },
             series,
-            new C.HoleSize { Val = 62 },
-            new C.FirstSliceAngle { Val = (ushort)270 });
+            new C.FirstSliceAngle { Val = (ushort)270 },
+            new C.HoleSize { Val = 62 });
 
         var title = new C.Title(
             new C.ChartText(
