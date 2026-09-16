@@ -36,6 +36,20 @@
             <Setter Property="Background" Value="#E7EBF0"/>
             <Setter Property="Foreground" Value="#26364A"/>
         </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#4B5563"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="IdentityTextBox" TargetType="TextBox">
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="Padding" Value="13,11"/>
+            <Setter Property="MinHeight" Value="48"/>
+            <Setter Property="BorderBrush" Value="#AEB8C5"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+        </Style>
         <Style x:Key="ScreenStart" TargetType="Grid">
             <Setter Property="Visibility" Value="Collapsed"/>
             <Style.Triggers><DataTrigger Binding="{Binding Screen}" Value="{x:Static vm:AppScreen.Start}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
@@ -74,31 +88,49 @@
 
     <Grid Margin="38">
         <Grid Style="{StaticResource ScreenStart}">
-            <Border MaxWidth="720" Padding="46" Background="White" CornerRadius="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border MaxWidth="760" Padding="44" Background="White" CornerRadius="18" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="G-Spiral" FontSize="18" FontWeight="SemiBold" Foreground="#6B7280"/>
-                    <TextBlock Text="В какой компании ты работаешь?" FontSize="34" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,12,0,8" TextWrapping="Wrap"/>
-                    <TextBlock Text="Ответьте на 7 вопросов о корпоративной культуре. В каждом вопросе можно выбрать любое количество вариантов — от нуля до всех шести." FontSize="16" Foreground="#667085" TextWrapping="Wrap" Margin="0,0,0,28"/>
-                    <TextBox Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" FontSize="18" Padding="14" MinHeight="52" BorderBrush="#C8D0DA" BorderThickness="1" ToolTip="Название компании"/>
-                    <Button Content="Начать" Command="{Binding StartCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,24,0,0" IsDefault="True"/>
+                    <TextBlock Text="{Binding AppVersionText}" FontSize="15" FontWeight="SemiBold" Foreground="#6B7280"/>
+                    <TextBlock Text="{Binding IdentityScreenTitle}" FontSize="33" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,12,0,8" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding IdentityScreenDescription}" FontSize="15" Foreground="#5F6B7A" TextWrapping="Wrap" Margin="0,0,0,24"/>
+                    <TextBlock Text="Имя" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding RespondentName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource IdentityTextBox}" ToolTip="Имя респондента" AutomationProperties.Name="Имя респондента"/>
+                    <TextBlock Text="Компания" Style="{StaticResource FieldLabel}" Margin="0,18,0,6"/>
+                    <TextBox Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource IdentityTextBox}" ToolTip="Название компании" AutomationProperties.Name="Компания"/>
+                    <TextBlock Text="Ответьте на 7 вопросов. В каждом можно выбрать от нуля до всех шести вариантов." FontSize="14" Foreground="#667085" TextWrapping="Wrap" Margin="0,20,0,0"/>
+                    <Button Content="{Binding StartActionText}" Command="{Binding StartCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,22,0,0" IsDefault="True"/>
                 </StackPanel>
             </Border>
         </Grid>
 
         <Grid Style="{StaticResource ScreenQuestion}">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" Margin="4,0,4,18">
-                <TextBlock Text="{Binding CompanyName, StringFormat=Корпоративная культура — {0}}" FontSize="16" Foreground="#667085"/>
-                <TextBlock Text="{Binding QuestionProgressText}" FontSize="14" FontWeight="SemiBold" Foreground="#6B7280" Margin="0,16,0,4"/>
-                <TextBlock Text="{Binding CurrentQuestionTitle}" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937" TextWrapping="Wrap"/>
-                <TextBlock Text="Выберите все варианты, которые соответствуют вашей компании. Можно не выбирать ни одного." FontSize="15" Foreground="#667085" Margin="0,7,0,0"/>
-            </StackPanel>
+            <Grid Grid.Row="0" Margin="4,0,4,18">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <TextBlock Text="{Binding IdentitySummaryText}" FontSize="15" Foreground="#5F6B7A"/>
+                <Grid Grid.Row="1" Margin="0,15,0,4">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding QuestionProgressText}" FontSize="14" FontWeight="SemiBold" Foreground="#6B7280"/>
+                    <Border Grid.Column="1" Background="#E7EBF0" CornerRadius="12" Padding="10,4">
+                        <TextBlock Text="{Binding CurrentQuestionSelectedCountText}" FontSize="13" FontWeight="SemiBold" Foreground="#374151"/>
+                    </Border>
+                </Grid>
+                <StackPanel Grid.Row="2">
+                    <TextBlock Text="{Binding CurrentQuestionTitle}" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937" TextWrapping="Wrap"/>
+                    <TextBlock Text="Выберите все варианты, которые соответствуют вашей компании. Можно не выбирать ни одного." FontSize="15" Foreground="#667085" Margin="0,7,0,0"/>
+                </StackPanel>
+            </Grid>
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding AnswerCards}" Margin="0,0,0,12">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="2" Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <ToggleButton IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="7" Padding="0" Background="{Binding LightHex}" BorderBrush="{Binding PrimaryHex}" BorderThickness="1" Foreground="#303846" FocusVisualStyle="{x:Null}" MinHeight="205">
+                            <ToggleButton IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          Margin="7" Padding="0"
+                                          Background="{Binding LightHex}" BorderBrush="{Binding PrimaryHex}" BorderThickness="2"
+                                          Foreground="#26364A" FocusVisualStyle="{x:Null}" MinHeight="205"
+                                          AutomationProperties.Name="{Binding TypeName}"
+                                          AutomationProperties.HelpText="{Binding Text}">
                                 <ToggleButton.InputBindings><KeyBinding Key="Enter" Command="{Binding ToggleCommand}"/></ToggleButton.InputBindings>
                                 <ToggleButton.Style>
                                     <Style TargetType="ToggleButton">
@@ -110,8 +142,8 @@
                                                             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                                             <Grid>
                                                                 <TextBlock Text="{Binding TypeName}" FontSize="18" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
-                                                                <Border HorizontalAlignment="Right" Width="28" Height="28" CornerRadius="14" Background="#44FFFFFF">
-                                                                    <TextBlock Text="✓" FontSize="17" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <Border x:Name="SelectionMarker" HorizontalAlignment="Right" Width="30" Height="30" CornerRadius="15" Background="#FFFFFF" BorderBrush="{Binding PrimaryHex}" BorderThickness="1.5">
+                                                                    <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="{Binding PrimaryHex}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                                                                     </TextBlock>
                                                                 </Border>
@@ -120,9 +152,14 @@
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="CardBorder" Property="Background" Value="{Binding PrimaryHex}"/><Setter Property="Foreground" Value="White"/><Setter TargetName="CardBorder" Property="BorderThickness" Value="2"/></Trigger>
-                                                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CardBorder" Property="BorderBrush" Value="#111827"/><Setter TargetName="CardBorder" Property="BorderThickness" Value="3"/></Trigger>
-                                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardBorder" Property="Opacity" Value="0.94"/></Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="CardBorder" Property="Background" Value="{Binding PrimaryHex}"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter TargetName="CardBorder" Property="BorderThickness" Value="3"/>
+                                                            <Setter TargetName="SelectionMarker" Property="BorderBrush" Value="White"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CardBorder" Property="BorderBrush" Value="#111827"/><Setter TargetName="CardBorder" Property="BorderThickness" Value="4"/></Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardBorder" Property="Opacity" Value="0.92"/></Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -146,10 +183,15 @@
 
         <Grid Style="{StaticResource ScreenResults}">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" Margin="4,0,4,20">
-                <TextBlock Text="{Binding CompanyName, StringFormat=Результаты — {0}}" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937"/>
-                <TextBlock Text="Типы организации отсортированы по количеству выбранных соответствий." FontSize="15" Foreground="#667085" Margin="0,6,0,0"/>
-            </StackPanel>
+            <Grid Grid.Row="0" Margin="4,0,4,20">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Результаты" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937"/>
+                    <TextBlock Text="{Binding IdentitySummaryText}" FontSize="15" Foreground="#536171" Margin="0,6,0,0"/>
+                    <TextBlock Text="Типы организации отсортированы по количеству выбранных соответствий." FontSize="14" Foreground="#667085" Margin="0,5,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Изменить имя и компанию" Command="{Binding EditIdentityCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Top"/>
+            </Grid>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="1.15*"/><ColumnDefinition Width="0.85*"/></Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Background="White" CornerRadius="14" Padding="24" Margin="4,0,12,0">
@@ -157,11 +199,11 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,8">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/><ColumnDefinition Width="72"/></Grid.ColumnDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="170"/><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
                                     <Border Width="14" Height="14" CornerRadius="7" Background="{Binding PrimaryHex}" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <ProgressBar Grid.Column="2" Margin="10,0,14,0" Minimum="0" Maximum="7" Value="{Binding Score}" Foreground="{Binding PrimaryHex}" Style="{StaticResource CompactProgressBar}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="3" Text="{Binding Score, StringFormat={}{0} из 7}" FontSize="14" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#4B5563"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding ScoreAndShareText}" FontSize="13.5" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#374151"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -186,12 +228,24 @@
                     </Grid>
                 </Border>
             </Grid>
-            <Grid Grid.Row="2" Margin="4,18,4,0">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Сохранить XLSX" Click="SaveReport_Click" Style="{StaticResource PrimaryButton}"/>
-                <Button Grid.Column="1" Content="Назад к ответам" Command="{Binding BackToAnswersCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"/>
-                <Button Grid.Column="3" Content="Пройти заново" Command="{Binding RestartCommand}" Style="{StaticResource SecondaryButton}"/>
-            </Grid>
+            <StackPanel Grid.Row="2" Margin="4,16,4,0">
+                <TextBlock Text="{Binding SavedReportStatusText}" FontSize="12.5" Foreground="#526071" TextTrimming="CharacterEllipsis" Margin="0,0,0,8">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                </TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Сохранить XLSX" Click="SaveReport_Click" Style="{StaticResource PrimaryButton}"/>
+                    <Button Grid.Column="1" Content="Назад к ответам" Command="{Binding BackToAnswersCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"/>
+                    <Button Grid.Column="2" Content="Открыть файл" Click="OpenSavedReport_Click" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                    </Button>
+                    <Button Grid.Column="3" Content="Открыть папку" Click="OpenSavedFolder_Click" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                    </Button>
+                    <Button Grid.Column="5" Content="Пройти заново" Command="{Binding RestartCommand}" Style="{StaticResource SecondaryButton}"/>
+                </Grid>
+                <TextBlock Text="{Binding AppVersionText}" FontSize="11.5" Foreground="#8A94A3" HorizontalAlignment="Right" Margin="0,6,0,0"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
