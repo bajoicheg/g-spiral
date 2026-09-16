@@ -13,8 +13,11 @@ public sealed class ExcelReportExporterTests
     {
         WithWorkbook(new SurveyState(), (_, document) =>
         {
-            var sheets = document.WorkbookPart!.Workbook.Sheets!.Elements<S.Sheet>().ToArray();
-            Assert.Equal(["Выбранные опции", "Итоги"], sheets.Select(sheet => sheet.Name!.Value).ToArray());
+            var workbookPart = RequireWorkbookPart(document);
+            var sheetsElement = workbookPart.Workbook.Sheets
+                ?? throw new InvalidOperationException("Workbook must contain sheets.");
+            var sheets = sheetsElement.Elements<S.Sheet>().ToArray();
+            Assert.Equal(["Выбранные опции", "Итоги"], sheets.Select(sheet => sheet.Name?.Value ?? string.Empty).ToArray());
 
             var errors = new OpenXmlValidator().Validate(document).ToArray();
             Assert.True(errors.Length == 0, string.Join(Environment.NewLine, errors.Select(error => error.Description)));
@@ -33,10 +36,10 @@ public sealed class ExcelReportExporterTests
             var selected = Cell(worksheet, "B6");
             var unselected = Cell(worksheet, "C6");
 
-            Assert.StartsWith("✓ ", selected.InlineString!.Text!.Text);
-            Assert.NotEqual(selected.StyleIndex!.Value, unselected.StyleIndex!.Value);
-            Assert.Equal(5U, selected.StyleIndex!.Value);
-            Assert.Equal(6U, unselected.StyleIndex!.Value);
+            Assert.StartsWith("✓ ", selected.InlineString?.Text?.Text ?? string.Empty);
+            Assert.NotEqual(selected.StyleIndex?.Value, unselected.StyleIndex?.Value);
+            Assert.Equal(5U, selected.StyleIndex?.Value);
+            Assert.Equal(6U, unselected.StyleIndex?.Value);
         });
     }
 
@@ -51,9 +54,9 @@ public sealed class ExcelReportExporterTests
         WithWorkbook(state, (_, document) =>
         {
             var worksheet = Worksheet(document, "Итоги");
-            Assert.Equal("Правила", Cell(worksheet, "A6").InlineString!.Text!.Text);
-            Assert.Equal("2", Cell(worksheet, "B6").CellValue!.Text);
-            Assert.Equal("Успех", Cell(worksheet, "A7").InlineString!.Text!.Text);
+            Assert.Equal("Правила", Cell(worksheet, "A6").InlineString?.Text?.Text);
+            Assert.Equal("2", Cell(worksheet, "B6").CellValue?.Text);
+            Assert.Equal("Успех", Cell(worksheet, "A7").InlineString?.Text?.Text);
 
             var part = WorksheetPart(document, "Итоги");
             var drawingsPart = part.GetPartsOfType<DrawingsPart>().Single();
@@ -68,7 +71,8 @@ public sealed class ExcelReportExporterTests
         {
             var part = WorksheetPart(document, "Итоги");
             Assert.Empty(part.GetPartsOfType<DrawingsPart>());
-            Assert.Equal("Нет выбранных соответствий", Cell(part.Worksheet, "E6").InlineString!.Text!.Text);
+            var worksheet = part.Worksheet ?? throw new InvalidOperationException("Results worksheet is required.");
+            Assert.Equal("Нет выбранных соответствий", Cell(worksheet, "E6").InlineString?.Text?.Text);
         });
     }
 
@@ -80,10 +84,16 @@ public sealed class ExcelReportExporterTests
 
         WithWorkbook(state, (_, document) =>
         {
-            var fills = document.WorkbookPart!.WorkbookStylesPart!.Stylesheet.Fills!.Elements<S.Fill>().ToArray();
-            var colors = fills
+            var workbookPart = RequireWorkbookPart(document);
+            var stylesPart = workbookPart.WorkbookStylesPart
+                ?? throw new InvalidOperationException("Workbook styles are required.");
+            var stylesheet = stylesPart.Stylesheet
+                ?? throw new InvalidOperationException("Stylesheet is required.");
+            var fillsElement = stylesheet.Fills
+                ?? throw new InvalidOperationException("Stylesheet fills are required.");
+            var colors = fillsElement.Elements<S.Fill>()
                 .Select(fill => fill.PatternFill?.ForegroundColor?.Rgb?.Value)
-                .Where(value => value is not null)
+                .OfType<string>()
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             foreach (var type in SurveyCatalog.Types)
@@ -115,14 +125,24 @@ public sealed class ExcelReportExporterTests
         }
     }
 
+    private static WorkbookPart RequireWorkbookPart(SpreadsheetDocument document) =>
+        document.WorkbookPart ?? throw new InvalidOperationException("Workbook part is required.");
+
     private static WorksheetPart WorksheetPart(SpreadsheetDocument document, string name)
     {
-        var sheet = document.WorkbookPart!.Workbook.Sheets!.Elements<S.Sheet>().Single(item => item.Name == name);
-        return (WorksheetPart)document.WorkbookPart.GetPartById(sheet.Id!);
+        var workbookPart = RequireWorkbookPart(document);
+        var sheets = workbookPart.Workbook.Sheets
+            ?? throw new InvalidOperationException("Workbook must contain sheets.");
+        var sheet = sheets.Elements<S.Sheet>().Single(item => item.Name?.Value == name);
+        var relationshipId = sheet.Id?.Value
+            ?? throw new InvalidOperationException($"Sheet '{name}' must have a relationship id.");
+        return (WorksheetPart)workbookPart.GetPartById(relationshipId);
     }
 
-    private static S.Worksheet Worksheet(SpreadsheetDocument document, string name) => WorksheetPart(document, name).Worksheet;
+    private static S.Worksheet Worksheet(SpreadsheetDocument document, string name) =>
+        WorksheetPart(document, name).Worksheet
+        ?? throw new InvalidOperationException($"Worksheet '{name}' is required.");
 
     private static S.Cell Cell(S.Worksheet worksheet, string reference) =>
-        worksheet.Descendants<S.Cell>().Single(cell => cell.CellReference == reference);
+        worksheet.Descendants<S.Cell>().Single(cell => cell.CellReference?.Value == reference);
 }
