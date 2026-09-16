@@ -13,8 +13,8 @@ public sealed class ExcelReportExporterTests
     {
         WithWorkbook(new SurveyState(), (_, document) =>
         {
-            var workbookPart = RequireWorkbookPart(document);
-            var sheetsElement = workbookPart.Workbook.Sheets
+            var workbook = RequireWorkbook(document);
+            var sheetsElement = workbook.Sheets
                 ?? throw new InvalidOperationException("Workbook must contain sheets.");
             var sheets = sheetsElement.Elements<S.Sheet>().ToArray();
             Assert.Equal(["Выбранные опции", "Итоги"], sheets.Select(sheet => sheet.Name?.Value ?? string.Empty).ToArray());
@@ -128,10 +128,17 @@ public sealed class ExcelReportExporterTests
     private static WorkbookPart RequireWorkbookPart(SpreadsheetDocument document) =>
         document.WorkbookPart ?? throw new InvalidOperationException("Workbook part is required.");
 
+    private static S.Workbook RequireWorkbook(SpreadsheetDocument document)
+    {
+        var workbookPart = RequireWorkbookPart(document);
+        return workbookPart.Workbook ?? throw new InvalidOperationException("Workbook root is required.");
+    }
+
     private static WorksheetPart WorksheetPart(SpreadsheetDocument document, string name)
     {
         var workbookPart = RequireWorkbookPart(document);
-        var sheets = workbookPart.Workbook.Sheets
+        var workbook = workbookPart.Workbook ?? throw new InvalidOperationException("Workbook root is required.");
+        var sheets = workbook.Sheets
             ?? throw new InvalidOperationException("Workbook must contain sheets.");
         var sheet = sheets.Elements<S.Sheet>().Single(item => item.Name?.Value == name);
         var relationshipId = sheet.Id?.Value
