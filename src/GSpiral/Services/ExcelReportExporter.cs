@@ -277,7 +277,8 @@ public static class ExcelReportExporter
         worksheetDrawing.Save();
 
         var drawing = new S.Drawing { Id = worksheetPart.GetIdOfPart(drawingsPart) };
-        worksheetPart.Worksheet.Append(drawing);
+        var worksheet = worksheetPart.Worksheet ?? throw new InvalidOperationException("Worksheet is required before adding the chart.");
+        worksheet.Append(drawing);
     }
 
     private static C.ChartSpace BuildChartSpace(IReadOnlyList<CultureResult> results)
