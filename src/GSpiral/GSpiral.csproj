@@ -7,6 +7,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>G-Spiral</AssemblyName>
     <RootNamespace>GSpiral</RootNamespace>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>G-Spiral</Product>
+    <Description>Опрос по типологии корпоративных культур с XLSX-отчётом</Description>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
     <SelfContained>true</SelfContained>
