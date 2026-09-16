@@ -36,6 +36,12 @@
             <Setter Property="Background" Value="#E7EBF0"/>
             <Setter Property="Foreground" Value="#26364A"/>
         </Style>
+        <Style x:Key="SavedActionButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -236,12 +242,8 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Content="Сохранить XLSX" Click="SaveReport_Click" Style="{StaticResource PrimaryButton}"/>
                     <Button Grid.Column="1" Content="Назад к ответам" Command="{Binding BackToAnswersCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"/>
-                    <Button Grid.Column="2" Content="Открыть файл" Click="OpenSavedReport_Click" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                    </Button>
-                    <Button Grid.Column="3" Content="Открыть папку" Click="OpenSavedFolder_Click" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                    </Button>
+                    <Button Grid.Column="2" Content="Открыть файл" Click="OpenSavedReport_Click" Style="{StaticResource SavedActionButton}" Margin="10,0,0,0"/>
+                    <Button Grid.Column="3" Content="Открыть папку" Click="OpenSavedFolder_Click" Style="{StaticResource SavedActionButton}" Margin="10,0,0,0"/>
                     <Button Grid.Column="5" Content="Пройти заново" Command="{Binding RestartCommand}" Style="{StaticResource SecondaryButton}"/>
                 </Grid>
                 <TextBlock Text="{Binding AppVersionText}" FontSize="11.5" Foreground="#8A94A3" HorizontalAlignment="Right" Margin="0,6,0,0"/>
