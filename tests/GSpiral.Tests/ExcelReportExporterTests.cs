@@ -10,6 +10,8 @@ namespace GSpiral.Tests;
 
 public sealed class ExcelReportExporterTests
 {
+    private static readonly DateTime GeneratedAt = new(2026, 9, 16, 19, 58, 0, DateTimeKind.Local);
+
     [Fact]
     public void Export_CreatesTwoNamedSheetsAndValidOpenXml()
     {
@@ -26,6 +28,25 @@ public sealed class ExcelReportExporterTests
     }
 
     [Fact]
+    public void Export_WritesRespondentCompanyGenerationTimeVersionAndFooterToBothSheets()
+    {
+        WithWorkbook(new SurveyState(), (_, document) =>
+        {
+            foreach (var sheetName in new[] { "Выбранные опции", "Итоги" })
+            {
+                var worksheet = Worksheet(document, sheetName);
+                Assert.Equal("Компания: ООО Пример", Cell(worksheet, "A2").InlineString?.Text?.Text);
+                Assert.Equal("Респондент: v.vasilev", Cell(worksheet, "A3").InlineString?.Text?.Text);
+                Assert.Equal("Сформировано: 16.09.2026 19:58 · G-Spiral 1.1.0", Cell(worksheet, "A4").InlineString?.Text?.Text);
+
+                var footer = worksheet.GetFirstChild<S.HeaderFooter>()
+                    ?? throw new InvalidOperationException("Worksheet footer is required.");
+                Assert.Equal("Сформировано G-Spiral 1.1.0", footer.OddFooter?.Text);
+            }
+        });
+    }
+
+    [Fact]
     public void Export_SelectedCellUsesBrightStyleCheckmarkAndUnselectedCellUsesDimStyle()
     {
         var state = new SurveyState();
@@ -34,8 +55,8 @@ public sealed class ExcelReportExporterTests
         WithWorkbook(state, (_, document) =>
         {
             var worksheet = Worksheet(document, "Выбранные опции");
-            var selected = Cell(worksheet, "B6");
-            var unselected = Cell(worksheet, "C6");
+            var selected = Cell(worksheet, "B7");
+            var unselected = Cell(worksheet, "C7");
 
             Assert.StartsWith("✓ ", selected.InlineString?.Text?.Text ?? string.Empty);
             Assert.NotEqual(selected.StyleIndex?.Value, unselected.StyleIndex?.Value);
@@ -55,9 +76,9 @@ public sealed class ExcelReportExporterTests
         WithWorkbook(state, (_, document) =>
         {
             var worksheet = Worksheet(document, "Итоги");
-            Assert.Equal("Правила", Cell(worksheet, "A6").InlineString?.Text?.Text);
-            Assert.Equal("2", Cell(worksheet, "B6").CellValue?.Text);
-            Assert.Equal("Успех", Cell(worksheet, "A7").InlineString?.Text?.Text);
+            Assert.Equal("Правила", Cell(worksheet, "A7").InlineString?.Text?.Text);
+            Assert.Equal("2", Cell(worksheet, "B7").CellValue?.Text);
+            Assert.Equal("Успех", Cell(worksheet, "A8").InlineString?.Text?.Text);
 
             var part = WorksheetPart(document, "Итоги");
             var drawingsPart = part.GetPartsOfType<DrawingsPart>().Single();
@@ -85,7 +106,7 @@ public sealed class ExcelReportExporterTests
             var part = WorksheetPart(document, "Итоги");
             Assert.Empty(part.GetPartsOfType<DrawingsPart>());
             var worksheet = part.Worksheet ?? throw new InvalidOperationException("Results worksheet is required.");
-            Assert.Equal("Нет выбранных соответствий", Cell(worksheet, "E6").InlineString?.Text?.Text);
+            Assert.Equal("Нет выбранных соответствий", Cell(worksheet, "E7").InlineString?.Text?.Text);
         });
     }
 
@@ -124,7 +145,7 @@ public sealed class ExcelReportExporterTests
         var path = Path.Combine(directory, "report.xlsx");
         try
         {
-            ExcelReportExporter.Export(path, "ООО Пример", new DateOnly(2026, 9, 16), state);
+            ExcelReportExporter.Export(path, "v.vasilev", "ООО Пример", GeneratedAt, state);
             Assert.True(File.Exists(path));
             using var document = SpreadsheetDocument.Open(path, false);
             assertion(path, document);
