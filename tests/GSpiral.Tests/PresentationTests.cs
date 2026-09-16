@@ -39,6 +39,26 @@ public sealed class PresentationTests
     }
 
     [Fact]
+    public void IdentityScreenCopy_ReflectsNormalAndEditModesAndVersion()
+    {
+        var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"));
+
+        Assert.Equal("Кто проходит опрос?", vm.IdentityScreenTitle);
+        Assert.Equal("Имя и компания определены из Windows. При необходимости их можно исправить перед началом.", vm.IdentityScreenDescription);
+        Assert.Equal("G-Spiral 1.1.0", vm.AppVersionText);
+
+        vm.StartCommand.Execute(null);
+        while (vm.Screen == AppScreen.Question)
+        {
+            vm.NextCommand.Execute(null);
+        }
+        vm.EditIdentityCommand.Execute(null);
+
+        Assert.Equal("Изменить данные респондента", vm.IdentityScreenTitle);
+        Assert.Equal("Изменения применятся к результату и следующему XLSX. Ответы сохранятся.", vm.IdentityScreenDescription);
+    }
+
+    [Fact]
     public void Navigation_AllowsZeroChoicesPreservesAnswersAndShowsSelectionCount()
     {
         var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"));
