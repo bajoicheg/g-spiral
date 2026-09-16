@@ -2,6 +2,8 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Validation;
 using GSpiral.Domain;
 using GSpiral.Services;
+using A = DocumentFormat.OpenXml.Drawing;
+using C = DocumentFormat.OpenXml.Drawing.Charts;
 using S = DocumentFormat.OpenXml.Spreadsheet;
 
 namespace GSpiral.Tests;
@@ -19,8 +21,7 @@ public sealed class ExcelReportExporterTests
             var sheets = sheetsElement.Elements<S.Sheet>().ToArray();
             Assert.Equal(["Выбранные опции", "Итоги"], sheets.Select(sheet => sheet.Name?.Value ?? string.Empty).ToArray());
 
-            var errors = new OpenXmlValidator().Validate(document).ToArray();
-            Assert.True(errors.Length == 0, string.Join(Environment.NewLine, errors.Select(error => error.Description)));
+            AssertValid(document);
         });
     }
 
@@ -44,7 +45,7 @@ public sealed class ExcelReportExporterTests
     }
 
     [Fact]
-    public void Export_SummaryIsSortedAndChartExistsWhenThereAreSelections()
+    public void Export_SummaryIsSortedAndChartIsValidWithIdentityPreservingColors()
     {
         var state = new SurveyState();
         state.SetSelected(0, CultureTypeId.Rules, true);
@@ -60,7 +61,19 @@ public sealed class ExcelReportExporterTests
 
             var part = WorksheetPart(document, "Итоги");
             var drawingsPart = part.GetPartsOfType<DrawingsPart>().Single();
-            Assert.Single(drawingsPart.ChartParts);
+            var chartPart = Assert.Single(drawingsPart.ChartParts);
+            var chartSpace = chartPart.ChartSpace
+                ?? throw new InvalidOperationException("Chart space is required.");
+
+            var actualColors = chartSpace.Descendants<C.DataPoint>()
+                .Select(point => point.Descendants<A.RgbColorModelHex>().Single().Val?.Value ?? string.Empty)
+                .ToArray();
+            var expectedColors = ResultCalculator.Calculate(state)
+                .Select(result => result.PrimaryHex.TrimStart('#'))
+                .ToArray();
+
+            Assert.Equal(expectedColors, actualColors);
+            AssertValid(document);
         });
     }
 
@@ -123,6 +136,12 @@ public sealed class ExcelReportExporterTests
                 Directory.Delete(directory, true);
             }
         }
+    }
+
+    private static void AssertValid(SpreadsheetDocument document)
+    {
+        var errors = new OpenXmlValidator().Validate(document).ToArray();
+        Assert.True(errors.Length == 0, string.Join(Environment.NewLine, errors.Select(error => error.Description)));
     }
 
     private static WorkbookPart RequireWorkbookPart(SpreadsheetDocument document) =>
