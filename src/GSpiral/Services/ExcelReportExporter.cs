@@ -1,3 +1,4 @@
+using System.Globalization;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using GSpiral.Domain;
@@ -16,10 +17,17 @@ public static class ExcelReportExporter
     private const uint BodyStyle = 4;
     private const uint FirstTypeStyle = 5;
     private const uint PercentStyle = 17;
+    private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
 
-    public static void Export(string path, string companyName, DateOnly date, SurveyState state)
+    public static void Export(
+        string path,
+        string respondentName,
+        string companyName,
+        DateTime generatedAt,
+        SurveyState state)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(respondentName);
         ArgumentException.ThrowIfNullOrWhiteSpace(companyName);
         ArgumentNullException.ThrowIfNull(state);
 
@@ -32,12 +40,12 @@ public static class ExcelReportExporter
         stylesPart.Stylesheet.Save();
 
         var optionsPart = workbookPart.AddNewPart<WorksheetPart>();
-        optionsPart.Worksheet = BuildOptionsWorksheet(companyName, date, state);
+        optionsPart.Worksheet = BuildOptionsWorksheet(respondentName, companyName, generatedAt, state);
         optionsPart.Worksheet.Save();
 
         var results = ResultCalculator.Calculate(state);
         var resultsPart = workbookPart.AddNewPart<WorksheetPart>();
-        resultsPart.Worksheet = BuildResultsWorksheet(companyName, date, results);
+        resultsPart.Worksheet = BuildResultsWorksheet(respondentName, companyName, generatedAt, results);
 
         if (results.Sum(x => x.Score) > 0)
         {
@@ -62,13 +70,20 @@ public static class ExcelReportExporter
             });
 
         workbookPart.Workbook.DefinedNames = new S.DefinedNames(
-            new S.DefinedName("'Выбранные опции'!$A$1:$H$11") { Name = "_xlnm.Print_Area", LocalSheetId = 0U },
-            new S.DefinedName("'Итоги'!$A$1:$J$13") { Name = "_xlnm.Print_Area", LocalSheetId = 1U });
+            new S.DefinedName("'Выбранные опции'!$A$1:$H$12") { Name = "_xlnm.Print_Area", LocalSheetId = 0U },
+            new S.DefinedName("'Итоги'!$A$1:$J$14") { Name = "_xlnm.Print_Area", LocalSheetId = 1U });
 
         workbookPart.Workbook.Save();
     }
 
-    private static S.Worksheet BuildOptionsWorksheet(string companyName, DateOnly date, SurveyState state)
+    public static void Export(string path, string companyName, DateOnly date, SurveyState state) =>
+        Export(path, Environment.UserName, companyName, date.ToDateTime(TimeOnly.MinValue), state);
+
+    private static S.Worksheet BuildOptionsWorksheet(
+        string respondentName,
+        string companyName,
+        DateTime generatedAt,
+        SurveyState state)
     {
         var sheetData = new S.SheetData();
         var worksheet = new S.Worksheet(
@@ -80,9 +95,9 @@ public static class ExcelReportExporter
                     ShowGridLines = false,
                     Pane = new S.Pane
                     {
-                        HorizontalSplit = 5D,
+                        HorizontalSplit = 6D,
                         VerticalSplit = 1D,
-                        TopLeftCell = "B6",
+                        TopLeftCell = "B7",
                         ActivePane = S.PaneValues.BottomRight,
                         State = S.PaneStateValues.Frozen
                     }
@@ -93,16 +108,18 @@ public static class ExcelReportExporter
         var mergeCells = new S.MergeCells(
             new S.MergeCell { Reference = "A1:H1" },
             new S.MergeCell { Reference = "A2:H2" },
-            new S.MergeCell { Reference = "A3:H3" });
+            new S.MergeCell { Reference = "A3:H3" },
+            new S.MergeCell { Reference = "A4:H4" });
         worksheet.Append(mergeCells);
 
         sheetData.Append(
             Row(1, 28, TextCell("A1", "Типология корпоративных культур", TitleStyle)),
             Row(2, 22, TextCell("A2", $"Компания: {companyName}", SubtitleStyle)),
-            Row(3, 22, TextCell("A3", $"Дата: {date:dd.MM.yyyy}", SubtitleStyle)),
-            Row(4, 9));
+            Row(3, 22, TextCell("A3", $"Респондент: {respondentName}", SubtitleStyle)),
+            Row(4, 20, TextCell("A4", GeneratedMetadata(generatedAt), SubtitleStyle)),
+            Row(5, 9));
 
-        var header = new S.Row { RowIndex = 5U, Height = 48D, CustomHeight = true };
+        var header = new S.Row { RowIndex = 6U, Height = 48D, CustomHeight = true };
         var headers = new[]
         {
             "Тип организации",
@@ -116,14 +133,14 @@ public static class ExcelReportExporter
         };
         for (var i = 0; i < headers.Length; i++)
         {
-            header.Append(TextCell(CellReference(i + 1, 5), headers[i], HeaderStyle));
+            header.Append(TextCell(CellReference(i + 1, 6), headers[i], HeaderStyle));
         }
         sheetData.Append(header);
 
         for (var typeIndex = 0; typeIndex < SurveyCatalog.Types.Count; typeIndex++)
         {
             var type = SurveyCatalog.Types[typeIndex];
-            var rowIndex = 6 + typeIndex;
+            var rowIndex = 7 + typeIndex;
             var row = new S.Row { RowIndex = (uint)rowIndex, Height = 105D, CustomHeight = true };
             row.Append(TextCell($"A{rowIndex}", type.Name, SelectedStyle(type.Id)));
 
@@ -153,14 +170,16 @@ public static class ExcelReportExporter
                 PaperSize = 9U,
                 FitToWidth = 1U,
                 FitToHeight = 0U
-            });
+            },
+            BuildFooter());
 
         return worksheet;
     }
 
     private static S.Worksheet BuildResultsWorksheet(
+        string respondentName,
         string companyName,
-        DateOnly date,
+        DateTime generatedAt,
         IReadOnlyList<CultureResult> results)
     {
         var sheetData = new S.SheetData();
@@ -178,28 +197,30 @@ public static class ExcelReportExporter
         var mergeCells = new S.MergeCells(
             new S.MergeCell { Reference = "A1:J1" },
             new S.MergeCell { Reference = "A2:J2" },
-            new S.MergeCell { Reference = "A3:J3" });
+            new S.MergeCell { Reference = "A3:J3" },
+            new S.MergeCell { Reference = "A4:J4" });
 
         sheetData.Append(
             Row(1, 28, TextCell("A1", "Результаты корпоративной культуры", TitleStyle)),
             Row(2, 22, TextCell("A2", $"Компания: {companyName}", SubtitleStyle)),
-            Row(3, 22, TextCell("A3", $"Дата: {date:dd.MM.yyyy}", SubtitleStyle)),
-            Row(4, 9),
-            Row(5, 34,
-                TextCell("A5", "Тип организации", HeaderStyle),
-                TextCell("B5", "Совпадений", HeaderStyle),
-                TextCell("C5", "Доля", HeaderStyle)));
+            Row(3, 22, TextCell("A3", $"Респондент: {respondentName}", SubtitleStyle)),
+            Row(4, 20, TextCell("A4", GeneratedMetadata(generatedAt), SubtitleStyle)),
+            Row(5, 9),
+            Row(6, 34,
+                TextCell("A6", "Тип организации", HeaderStyle),
+                TextCell("B6", "Совпадений", HeaderStyle),
+                TextCell("C6", "Доля", HeaderStyle)));
 
         var total = results.Sum(x => x.Score);
         if (total == 0)
         {
-            mergeCells.Append(new S.MergeCell { Reference = "E6:J12" });
+            mergeCells.Append(new S.MergeCell { Reference = "E7:J13" });
         }
 
         for (var i = 0; i < results.Count; i++)
         {
             var result = results[i];
-            var rowIndex = 6 + i;
+            var rowIndex = 7 + i;
             var row = Row(rowIndex, 30,
                 TextCell($"A{rowIndex}", result.Name, SelectedStyle(result.TypeId)),
                 NumberCell($"B{rowIndex}", result.Score, BodyStyle),
@@ -207,16 +228,16 @@ public static class ExcelReportExporter
 
             if (total == 0 && i == 0)
             {
-                row.Append(TextCell("E6", "Нет выбранных соответствий", TitleStyle));
+                row.Append(TextCell("E7", "Нет выбранных соответствий", TitleStyle));
                 row.Height = 50D;
             }
 
             sheetData.Append(row);
         }
 
-        sheetData.Append(Row(13, 26,
-            TextCell("A13", "Всего выбранных соответствий", HeaderStyle),
-            NumberCell("B13", total, BodyStyle)));
+        sheetData.Append(Row(14, 26,
+            TextCell("A14", "Всего выбранных соответствий", HeaderStyle),
+            NumberCell("B14", total, BodyStyle)));
 
         worksheet.Append(
             mergeCells,
@@ -227,10 +248,17 @@ public static class ExcelReportExporter
                 PaperSize = 9U,
                 FitToWidth = 1U,
                 FitToHeight = 1U
-            });
+            },
+            BuildFooter());
 
         return worksheet;
     }
+
+    private static string GeneratedMetadata(DateTime generatedAt) =>
+        $"Сформировано: {generatedAt.ToString("dd.MM.yyyy HH:mm", RussianCulture)} · {AppMetadata.ProductName} {AppMetadata.Version}";
+
+    private static S.HeaderFooter BuildFooter() =>
+        new(new S.OddFooter(AppMetadata.FooterText));
 
     private static void AddDonutChart(WorksheetPart worksheetPart, IReadOnlyList<CultureResult> results)
     {
@@ -262,12 +290,12 @@ public static class ExcelReportExporter
             new Xdr.FromMarker(
                 new Xdr.ColumnId("4"),
                 new Xdr.ColumnOffset("0"),
-                new Xdr.RowId("4"),
+                new Xdr.RowId("5"),
                 new Xdr.RowOffset("0")),
             new Xdr.ToMarker(
                 new Xdr.ColumnId("10"),
                 new Xdr.ColumnOffset("0"),
-                new Xdr.RowId("14"),
+                new Xdr.RowId("15"),
                 new Xdr.RowOffset("0")),
             frame,
             new Xdr.ClientData());
@@ -301,7 +329,7 @@ public static class ExcelReportExporter
         }
         series.Append(new C.CategoryAxisData(
             new C.StringReference(
-                new C.Formula("'Итоги'!$A$6:$A$11"),
+                new C.Formula("'Итоги'!$A$7:$A$12"),
                 stringCache)));
 
         var numberCache = new C.NumberingCache(
@@ -309,11 +337,11 @@ public static class ExcelReportExporter
             new C.PointCount { Val = (uint)results.Count });
         for (var i = 0; i < results.Count; i++)
         {
-            numberCache.Append(new C.NumericPoint(new C.NumericValue(results[i].Score.ToString(System.Globalization.CultureInfo.InvariantCulture))) { Index = (uint)i });
+            numberCache.Append(new C.NumericPoint(new C.NumericValue(results[i].Score.ToString(CultureInfo.InvariantCulture))) { Index = (uint)i });
         }
         series.Append(new C.Values(
             new C.NumberReference(
-                new C.Formula("'Итоги'!$B$6:$B$11"),
+                new C.Formula("'Итоги'!$B$7:$B$12"),
                 numberCache)));
 
         var doughnut = new C.DoughnutChart(
@@ -449,7 +477,7 @@ public static class ExcelReportExporter
             CellReference = reference,
             DataType = S.CellValues.Number,
             StyleIndex = styleIndex,
-            CellValue = new S.CellValue(value.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            CellValue = new S.CellValue(value.ToString(CultureInfo.InvariantCulture))
         };
 
     private static uint SelectedStyle(CultureTypeId id) => FirstTypeStyle + (uint)((int)id * 2);
