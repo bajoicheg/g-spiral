@@ -191,26 +191,33 @@ public static class ExcelReportExporter
                 TextCell("B5", "Совпадений", HeaderStyle),
                 TextCell("C5", "Доля", HeaderStyle)));
 
+        var total = results.Sum(x => x.Score);
+        if (total == 0)
+        {
+            mergeCells.Append(new S.MergeCell { Reference = "E6:J12" });
+        }
+
         for (var i = 0; i < results.Count; i++)
         {
             var result = results[i];
             var rowIndex = 6 + i;
-            sheetData.Append(Row(rowIndex, 30,
+            var row = Row(rowIndex, 30,
                 TextCell($"A{rowIndex}", result.Name, SelectedStyle(result.TypeId)),
                 NumberCell($"B{rowIndex}", result.Score, BodyStyle),
-                NumberCell($"C{rowIndex}", result.Share, PercentStyle)));
+                NumberCell($"C{rowIndex}", result.Share, PercentStyle));
+
+            if (total == 0 && i == 0)
+            {
+                row.Append(TextCell("E6", "Нет выбранных соответствий", TitleStyle));
+                row.Height = 50D;
+            }
+
+            sheetData.Append(row);
         }
 
-        var total = results.Sum(x => x.Score);
         sheetData.Append(Row(13, 26,
             TextCell("A13", "Всего выбранных соответствий", HeaderStyle),
             NumberCell("B13", total, BodyStyle)));
-
-        if (total == 0)
-        {
-            mergeCells.Append(new S.MergeCell { Reference = "E6:J12" });
-            sheetData.Append(Row(6, 50, TextCell("E6", "Нет выбранных соответствий", TitleStyle)));
-        }
 
         worksheet.Append(
             mergeCells,
@@ -233,7 +240,8 @@ public static class ExcelReportExporter
         chartPart.ChartSpace = BuildChartSpace(results);
         chartPart.ChartSpace.Save();
 
-        drawingsPart.WorksheetDrawing = new Xdr.WorksheetDrawing();
+        var worksheetDrawing = new Xdr.WorksheetDrawing();
+        drawingsPart.WorksheetDrawing = worksheetDrawing;
         var chartRelId = drawingsPart.GetIdOfPart(chartPart);
 
         var frame = new Xdr.GraphicFrame(
@@ -265,8 +273,8 @@ public static class ExcelReportExporter
             frame,
             new Xdr.ClientData());
 
-        drawingsPart.WorksheetDrawing.Append(anchor);
-        drawingsPart.WorksheetDrawing.Save();
+        worksheetDrawing.Append(anchor);
+        worksheetDrawing.Save();
 
         var drawing = new S.Drawing { Id = worksheetPart.GetIdOfPart(drawingsPart) };
         worksheetPart.Worksheet.Append(drawing);
@@ -312,7 +320,7 @@ public static class ExcelReportExporter
             new C.VaryColors { Val = true },
             series,
             new C.HoleSize { Val = 62 },
-            new C.FirstSliceAngle { Val = 270U });
+            new C.FirstSliceAngle { Val = (ushort)270 });
 
         var title = new C.Title(
             new C.ChartText(
