@@ -42,6 +42,7 @@ public sealed class MainViewModel : ObservableObject
     private bool isEditingIdentity;
     private string lastSavedReportPath = string.Empty;
     private SurveyRunState surveyRunState;
+    private int scrollResetRevision;
 
     public MainViewModel()
         : this(UserIdentityDefaults.Detect(), () => Random.Shared.Next())
@@ -80,6 +81,12 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref surveyRunState, value);
     }
 
+    public int ScrollResetRevision
+    {
+        get => scrollResetRevision;
+        private set => SetProperty(ref scrollResetRevision, value);
+    }
+
     public string RespondentName
     {
         get => respondentName;
@@ -89,10 +96,7 @@ public sealed class MainViewModel : ObservableObject
             {
                 startCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(IdentitySummaryText));
-                if (Screen == AppScreen.Results || IsEditingIdentity)
-                {
-                    ClearSavedReport();
-                }
+                if (Screen == AppScreen.Results || IsEditingIdentity) ClearSavedReport();
             }
         }
     }
@@ -106,41 +110,21 @@ public sealed class MainViewModel : ObservableObject
             {
                 startCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(IdentitySummaryText));
-                if (Screen == AppScreen.Results || IsEditingIdentity)
-                {
-                    ClearSavedReport();
-                }
+                if (Screen == AppScreen.Results || IsEditingIdentity) ClearSavedReport();
             }
         }
     }
 
-    public string TrimmedRespondentName
-    {
-        get => trimmedRespondentName;
-        private set => SetProperty(ref trimmedRespondentName, value);
-    }
-
-    public string TrimmedCompanyName
-    {
-        get => trimmedCompanyName;
-        private set => SetProperty(ref trimmedCompanyName, value);
-    }
-
-    public AppScreen Screen
-    {
-        get => screen;
-        private set => SetProperty(ref screen, value);
-    }
+    public string TrimmedRespondentName { get => trimmedRespondentName; private set => SetProperty(ref trimmedRespondentName, value); }
+    public string TrimmedCompanyName { get => trimmedCompanyName; private set => SetProperty(ref trimmedCompanyName, value); }
+    public AppScreen Screen { get => screen; private set => SetProperty(ref screen, value); }
 
     public int CurrentQuestionIndex
     {
         get => currentQuestionIndex;
         private set
         {
-            if (SetProperty(ref currentQuestionIndex, value))
-            {
-                NotifyQuestionProperties();
-            }
+            if (SetProperty(ref currentQuestionIndex, value)) NotifyQuestionProperties();
         }
     }
 
@@ -155,36 +139,14 @@ public sealed class MainViewModel : ObservableObject
         get => currentOptions;
         private set
         {
-            if (SetProperty(ref currentOptions, value))
-            {
-                NotifySelectionCount();
-            }
+            if (SetProperty(ref currentOptions, value)) NotifySelectionCount();
         }
     }
 
-    public IReadOnlyList<ResultRowViewModel> Results
-    {
-        get => results;
-        private set => SetProperty(ref results, value);
-    }
-
-    public IReadOnlyList<StageAnswerSummaryViewModel> StageAnswerSummaries
-    {
-        get => stageAnswerSummaries;
-        private set => SetProperty(ref stageAnswerSummaries, value);
-    }
-
-    public int TotalSelections
-    {
-        get => totalSelections;
-        private set => SetProperty(ref totalSelections, value);
-    }
-
-    public bool HasSelections
-    {
-        get => hasSelections;
-        private set => SetProperty(ref hasSelections, value);
-    }
+    public IReadOnlyList<ResultRowViewModel> Results { get => results; private set => SetProperty(ref results, value); }
+    public IReadOnlyList<StageAnswerSummaryViewModel> StageAnswerSummaries { get => stageAnswerSummaries; private set => SetProperty(ref stageAnswerSummaries, value); }
+    public int TotalSelections { get => totalSelections; private set => SetProperty(ref totalSelections, value); }
+    public bool HasSelections { get => hasSelections; private set => SetProperty(ref hasSelections, value); }
 
     public bool IsEditingIdentity
     {
@@ -250,12 +212,8 @@ public sealed class MainViewModel : ObservableObject
         LastSavedReportPath = path;
     }
 
-    private SurveyRunState CreateNewRunState() =>
-        SurveyRandomizer.CreateRun(seedProvider());
-
-    private bool CanStart() =>
-        !string.IsNullOrWhiteSpace(RespondentName) &&
-        !string.IsNullOrWhiteSpace(CompanyName);
+    private SurveyRunState CreateNewRunState() => SurveyRandomizer.CreateRun(seedProvider());
+    private bool CanStart() => !string.IsNullOrWhiteSpace(RespondentName) && !string.IsNullOrWhiteSpace(CompanyName);
 
     private void Start()
     {
@@ -263,7 +221,6 @@ public sealed class MainViewModel : ObservableObject
         CompanyName = CompanyName.Trim();
         TrimmedRespondentName = RespondentName;
         TrimmedCompanyName = CompanyName;
-
         if (IsEditingIdentity)
         {
             IsEditingIdentity = false;
@@ -272,7 +229,6 @@ public sealed class MainViewModel : ObservableObject
             Screen = AppScreen.Results;
             return;
         }
-
         CurrentQuestionIndex = 0;
         RebuildCurrentOptions();
         Screen = AppScreen.Question;
@@ -285,7 +241,6 @@ public sealed class MainViewModel : ObservableObject
             Screen = AppScreen.Start;
             return;
         }
-
         CurrentQuestionIndex--;
         RebuildCurrentOptions();
     }
@@ -298,7 +253,6 @@ public sealed class MainViewModel : ObservableObject
             RebuildCurrentOptions();
             return;
         }
-
         RefreshResults();
         Screen = AppScreen.Results;
     }
@@ -337,87 +291,56 @@ public sealed class MainViewModel : ObservableObject
 
     private void RebuildCurrentOptions()
     {
-        var byId = SurveyDisplayCatalog.OptionsForStage(CurrentQuestionIndex)
-            .ToDictionary(option => option.Id, StringComparer.Ordinal);
+        var byId = SurveyDisplayCatalog.OptionsForStage(CurrentQuestionIndex).ToDictionary(option => option.Id, StringComparer.Ordinal);
         var order = SurveyRunState.RandomizedOrderByStage[CurrentQuestionIndex];
-
-        CurrentOptions = order
-            .Select((id, displayIndex) =>
+        CurrentOptions = order.Select((id, displayIndex) =>
+        {
+            var option = byId[id];
+            var decorative = DecorativePalette[displayIndex % DecorativePalette.Length];
+            return new AtomicOptionViewModel(option.Id, option.Text, decorative.Fill, decorative.Border, SurveyRunState.IsDisplaySelected(option), selected =>
             {
-                var option = byId[id];
-                var decorative = DecorativePalette[displayIndex % DecorativePalette.Length];
-                return new AtomicOptionViewModel(
-                    option.Id,
-                    option.Text,
-                    decorative.Fill,
-                    decorative.Border,
-                    SurveyRunState.IsDisplaySelected(option),
-                    selected =>
-                    {
-                        SurveyRunState.SetDisplaySelected(option, selected);
-                        ClearSavedReport();
-                        NotifySelectionCount();
-                    });
-            })
-            .ToArray();
-
+                SurveyRunState.SetDisplaySelected(option, selected);
+                ClearSavedReport();
+                NotifySelectionCount();
+            });
+        }).ToArray();
         NotifySelectionCount();
+        ScrollResetRevision++;
     }
 
     private void SelectAllCurrent()
     {
-        foreach (var option in CurrentOptions)
-        {
-            option.IsSelected = true;
-        }
+        foreach (var option in CurrentOptions) option.IsSelected = true;
         NotifySelectionCount();
     }
 
     private void ClearAllCurrent()
     {
-        foreach (var option in CurrentOptions)
-        {
-            option.IsSelected = false;
-        }
+        foreach (var option in CurrentOptions) option.IsSelected = false;
         NotifySelectionCount();
     }
 
     private void RefreshResults()
     {
         Results = ResultCalculator.Calculate(SurveyRunState)
-            .Select(result => new ResultRowViewModel(
-                result.TypeId,
-                result.Name,
-                result.PrimaryHex,
-                result.Score,
-                result.AbsolutePercent,
-                result.ChartShare,
-                result.Score / 700d))
+            .Select(result => new ResultRowViewModel(result.TypeId, result.Name, result.PrimaryHex, result.Score, result.AbsolutePercent, result.ChartShare, result.Score / 700d))
             .ToArray();
-
-        TotalSelections = SurveyCatalog.Stages.Sum(stage =>
-            SurveyDisplayCatalog.OptionsForStage(stage.Index)
-                .Count(SurveyRunState.IsDisplaySelected));
+        TotalSelections = SurveyCatalog.Stages.Sum(stage => SurveyDisplayCatalog.OptionsForStage(stage.Index).Count(SurveyRunState.IsDisplaySelected));
         HasSelections = Results.Sum(result => result.Score) > 0d;
         OnPropertyChanged(nameof(TotalSelectionsText));
-
-        StageAnswerSummaries = SurveyCatalog.Stages
-            .Select(stage =>
-            {
-                var byId = SurveyDisplayCatalog.OptionsForStage(stage.Index)
-                    .ToDictionary(option => option.Id, StringComparer.Ordinal);
-                var selectedTexts = SurveyRunState.RandomizedOrderByStage[stage.Index]
-                    .Select(id => byId[id])
-                    .Where(SurveyRunState.IsDisplaySelected)
-                    .Select(option => option.Text)
-                    .ToArray();
-                return new StageAnswerSummaryViewModel(stage.Index, stage.Title, selectedTexts);
-            })
-            .ToArray();
+        StageAnswerSummaries = SurveyCatalog.Stages.Select(stage =>
+        {
+            var byId = SurveyDisplayCatalog.OptionsForStage(stage.Index).ToDictionary(option => option.Id, StringComparer.Ordinal);
+            var selectedTexts = SurveyRunState.RandomizedOrderByStage[stage.Index]
+                .Select(id => byId[id])
+                .Where(SurveyRunState.IsDisplaySelected)
+                .Select(option => option.Text)
+                .ToArray();
+            return new StageAnswerSummaryViewModel(stage.Index, stage.Title, selectedTexts);
+        }).ToArray();
     }
 
     private void ClearSavedReport() => LastSavedReportPath = string.Empty;
-
     private void NotifySelectionCount()
     {
         OnPropertyChanged(nameof(CurrentQuestionSelectedCount));
