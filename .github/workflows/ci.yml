@@ -64,32 +64,3 @@ jobs:
         with:
           generate_release_notes: true
           files: artifacts/publish/G-Spiral.exe
-
-  publish-v1-3-1:
-    if: github.ref == 'refs/heads/feature/v1.3.1' && github.event.head_commit.message == 'publish-v1.3.1'
-    needs: build
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: G-Spiral-win-x64
-          path: artifacts/publish
-      - name: Create GitHub Release v1.3.1
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.3.1
-          target_commitish: release/v1.3.1-source
-          name: G-Spiral 1.3.1
-          body: |
-            G-Spiral 1.3.1 — hotfix отображения диаграммы в XLSX.
-
-            - исправлен белый прямоугольник вместо круговой диаграммы в Microsoft Excel;
-            - native Open XML Pie3DChart заменён в итоговом XLSX на встроенный PNG, отрисованный тем же 3D-движком, что используется в приложении;
-            - диаграмма содержит канонические цвета типов, перспективные боковые грани, легенду и доли типов в сумме набранных баллов;
-            - структура таблиц, расчёты, округление и три листа XLSX сохранены без изменений;
-            - regression-тест проверяет отсутствие ChartPart, наличие PNG ImagePart/xdr:pic, PNG-сигнатуру и Open XML-валидность книги.
-
-            Сборка проверена Windows CI: automated tests, self-contained single-file publish и smoke-test G-Spiral.exe.
-          files: artifacts/publish/G-Spiral.exe
