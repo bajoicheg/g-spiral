@@ -238,7 +238,7 @@ public sealed class ExcelReportExporterTests
         var path = Path.Combine(directory, "report.xlsx");
         try
         {
-            ExcelReportExporter.Export(path, "v.vasilev", "ООО Пример", GeneratedAt, state);
+            ExcelReportExporterV131.Export(path, "v.vasilev", "ООО Пример", GeneratedAt, state);
             Assert.True(File.Exists(path));
             using var document = SpreadsheetDocument.Open(path, false);
             assertion(path, document);
