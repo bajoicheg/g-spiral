@@ -3,9 +3,8 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Validation;
 using GSpiral.Domain;
 using GSpiral.Services;
-using A = DocumentFormat.OpenXml.Drawing;
-using C = DocumentFormat.OpenXml.Drawing.Charts;
 using S = DocumentFormat.OpenXml.Spreadsheet;
+using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
 namespace GSpiral.Tests;
 
@@ -85,7 +84,7 @@ public sealed class ExcelReportExporterTests
     }
 
     [Fact]
-    public void ResultsSheet_IsSortedUsesRoundedScoreAndExpressionPercentAndValidThreeDPie()
+    public void ResultsSheet_IsSortedUsesRoundedScoreAndExpressionPercentAndEmbedsRenderedPngPie()
     {
         var state = CreateState(321);
         SelectWholeCell(state, CultureTypeId.Rules, 0);
@@ -101,18 +100,15 @@ public sealed class ExcelReportExporterTests
             Assert.Equal(200d / 700d, DoubleCell(worksheet, "E7"), 10);
 
             var part = WorksheetPart(document, "Итоги");
-            var drawingsPart = part.GetPartsOfType<DrawingsPart>().Single();
-            var chartPart = Assert.Single(drawingsPart.ChartParts);
-            var chartSpace = chartPart.ChartSpace ?? throw new InvalidOperationException("Chart space required.");
-            Assert.Single(chartSpace.Descendants<C.Pie3DChart>());
-
-            var actualColors = chartSpace.Descendants<C.DataPoint>()
-                .Select(point => point.Descendants<A.RgbColorModelHex>().Single().Val?.Value ?? string.Empty)
-                .ToArray();
-            var expectedColors = ResultCalculator.Calculate(state)
-                .Select(result => result.PrimaryHex.TrimStart('#'))
-                .ToArray();
-            Assert.Equal(expectedColors, actualColors);
+            var drawingsPart = Assert.Single(part.GetPartsOfType<DrawingsPart>());
+            Assert.Empty(drawingsPart.ChartParts);
+            var imagePart = Assert.Single(drawingsPart.GetPartsOfType<ImagePart>());
+            Assert.Equal("image/png", imagePart.ContentType);
+            using var image = imagePart.GetStream(FileMode.Open, FileAccess.Read);
+            var signature = new byte[8];
+            Assert.Equal(8, image.Read(signature, 0, signature.Length));
+            Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, signature);
+            Assert.Single(drawingsPart.WorksheetDrawing?.Descendants<Xdr.Picture>() ?? []);
             AssertValid(document);
         });
     }
@@ -188,7 +184,7 @@ public sealed class ExcelReportExporterTests
     }
 
     [Fact]
-    public void ZeroSelections_HasNoChartAndExplicitMessage()
+    public void ZeroSelections_HasNoDrawingAndExplicitMessage()
     {
         WithWorkbook(CreateState(55), (_, document) =>
         {
