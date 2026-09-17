@@ -1,0 +1,195 @@
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
+using GSpiral.Domain;
+using GSpiral.Services;
+using A = DocumentFormat.OpenXml.Drawing;
+using C = DocumentFormat.OpenXml.Drawing.Charts;
+using S = DocumentFormat.OpenXml.Spreadsheet;
+
+namespace GSpiral.Tests;
+
+public sealed class ExcelReportExporterTests
+{
+    private static readonly DateTime GeneratedAt = new(2026, 9, 16, 19, 58, 0, DateTimeKind.Local);
+
+    [Fact]
+    public void Export_CreatesTwoNamedSheetsAndValidOpenXml()
+    {
+        WithWorkbook(new SurveyState(), (_, document) =>
+        {
+            var workbook = RequireWorkbook(document);
+            var sheetsElement = workbook.Sheets
+                ?? throw new InvalidOperationException("Workbook must contain sheets.");
+            var sheets = sheetsElement.Elements<S.Sheet>().ToArray();
+            Assert.Equal(["Выбранные опции", "Итоги"], sheets.Select(sheet => sheet.Name?.Value ?? string.Empty).ToArray());
+
+            AssertValid(document);
+        });
+    }
+
+    [Fact]
+    public void Export_WritesRespondentCompanyGenerationTimeVersionAndFooterToBothSheets()
+    {
+        WithWorkbook(new SurveyState(), (_, document) =>
+        {
+            foreach (var sheetName in new[] { "Выбранные опции", "Итоги" })
+            {
+                var worksheet = Worksheet(document, sheetName);
+                Assert.Equal("Компания: ООО Пример", Cell(worksheet, "A2").InlineString?.Text?.Text);
+                Assert.Equal("Респондент: v.vasilev", Cell(worksheet, "A3").InlineString?.Text?.Text);
+                Assert.Equal("Сформировано: 16.09.2026 19:58 · G-Spiral 1.1.0", Cell(worksheet, "A4").InlineString?.Text?.Text);
+
+                var footer = worksheet.GetFirstChild<S.HeaderFooter>()
+                    ?? throw new InvalidOperationException("Worksheet footer is required.");
+                Assert.Equal("Сформировано G-Spiral 1.1.0", footer.OddFooter?.Text);
+            }
+        });
+    }
+
+    [Fact]
+    public void Export_SelectedCellUsesBrightStyleCheckmarkAndUnselectedCellUsesDimStyle()
+    {
+        var state = new SurveyState();
+        state.SetSelected(0, CultureTypeId.Turquoise, true);
+
+        WithWorkbook(state, (_, document) =>
+        {
+            var worksheet = Worksheet(document, "Выбранные опции");
+            var selected = Cell(worksheet, "B7");
+            var unselected = Cell(worksheet, "C7");
+
+            Assert.StartsWith("✓ ", selected.InlineString?.Text?.Text ?? string.Empty);
+            Assert.NotEqual(selected.StyleIndex?.Value, unselected.StyleIndex?.Value);
+            Assert.Equal(5U, selected.StyleIndex?.Value);
+            Assert.Equal(6U, unselected.StyleIndex?.Value);
+        });
+    }
+
+    [Fact]
+    public void Export_SummaryIsSortedAndChartIsValidWithIdentityPreservingColors()
+    {
+        var state = new SurveyState();
+        state.SetSelected(0, CultureTypeId.Rules, true);
+        state.SetSelected(1, CultureTypeId.Rules, true);
+        state.SetSelected(0, CultureTypeId.Success, true);
+
+        WithWorkbook(state, (_, document) =>
+        {
+            var worksheet = Worksheet(document, "Итоги");
+            Assert.Equal("Правила", Cell(worksheet, "A7").InlineString?.Text?.Text);
+            Assert.Equal("2", Cell(worksheet, "B7").CellValue?.Text);
+            Assert.Equal("Успех", Cell(worksheet, "A8").InlineString?.Text?.Text);
+
+            var part = WorksheetPart(document, "Итоги");
+            var drawingsPart = part.GetPartsOfType<DrawingsPart>().Single();
+            var chartPart = Assert.Single(drawingsPart.ChartParts);
+            var chartSpace = chartPart.ChartSpace
+                ?? throw new InvalidOperationException("Chart space is required.");
+
+            var actualColors = chartSpace.Descendants<C.DataPoint>()
+                .Select(point => point.Descendants<A.RgbColorModelHex>().Single().Val?.Value ?? string.Empty)
+                .ToArray();
+            var expectedColors = ResultCalculator.Calculate(state)
+                .Select(result => result.PrimaryHex.TrimStart('#'))
+                .ToArray();
+
+            Assert.Equal(expectedColors, actualColors);
+            AssertValid(document);
+        });
+    }
+
+    [Fact]
+    public void Export_ZeroSelectionsHasNoChartAndShowsExplicitMessage()
+    {
+        WithWorkbook(new SurveyState(), (_, document) =>
+        {
+            var part = WorksheetPart(document, "Итоги");
+            Assert.Empty(part.GetPartsOfType<DrawingsPart>());
+            var worksheet = part.Worksheet ?? throw new InvalidOperationException("Results worksheet is required.");
+            Assert.Equal("Нет выбранных соответствий", Cell(worksheet, "E7").InlineString?.Text?.Text);
+        });
+    }
+
+    [Fact]
+    public void Export_UsesExactPaletteInStylesheet()
+    {
+        var state = new SurveyState();
+        state.SetSelected(0, CultureTypeId.Turquoise, true);
+
+        WithWorkbook(state, (_, document) =>
+        {
+            var workbookPart = RequireWorkbookPart(document);
+            var stylesPart = workbookPart.WorkbookStylesPart
+                ?? throw new InvalidOperationException("Workbook styles are required.");
+            var stylesheet = stylesPart.Stylesheet
+                ?? throw new InvalidOperationException("Stylesheet is required.");
+            var fillsElement = stylesheet.Fills
+                ?? throw new InvalidOperationException("Stylesheet fills are required.");
+            var colors = fillsElement.Elements<S.Fill>()
+                .Select(fill => fill.PatternFill?.ForegroundColor?.Rgb?.Value)
+                .OfType<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var type in SurveyCatalog.Types)
+            {
+                Assert.Contains($"FF{type.PrimaryHex.TrimStart('#')}", colors);
+                Assert.Contains($"FF{type.LightHex.TrimStart('#')}", colors);
+            }
+        });
+    }
+
+    private static void WithWorkbook(SurveyState state, Action<string, SpreadsheetDocument> assertion)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "g-spiral-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "report.xlsx");
+        try
+        {
+            ExcelReportExporter.Export(path, "v.vasilev", "ООО Пример", GeneratedAt, state);
+            Assert.True(File.Exists(path));
+            using var document = SpreadsheetDocument.Open(path, false);
+            assertion(path, document);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+    }
+
+    private static void AssertValid(SpreadsheetDocument document)
+    {
+        var errors = new OpenXmlValidator().Validate(document).ToArray();
+        Assert.True(errors.Length == 0, string.Join(Environment.NewLine, errors.Select(error => error.Description)));
+    }
+
+    private static WorkbookPart RequireWorkbookPart(SpreadsheetDocument document) =>
+        document.WorkbookPart ?? throw new InvalidOperationException("Workbook part is required.");
+
+    private static S.Workbook RequireWorkbook(SpreadsheetDocument document)
+    {
+        var workbookPart = RequireWorkbookPart(document);
+        return workbookPart.Workbook ?? throw new InvalidOperationException("Workbook root is required.");
+    }
+
+    private static WorksheetPart WorksheetPart(SpreadsheetDocument document, string name)
+    {
+        var workbookPart = RequireWorkbookPart(document);
+        var workbook = workbookPart.Workbook ?? throw new InvalidOperationException("Workbook root is required.");
+        var sheets = workbook.Sheets
+            ?? throw new InvalidOperationException("Workbook must contain sheets.");
+        var sheet = sheets.Elements<S.Sheet>().Single(item => item.Name?.Value == name);
+        var relationshipId = sheet.Id?.Value
+            ?? throw new InvalidOperationException($"Sheet '{name}' must have a relationship id.");
+        return (WorksheetPart)workbookPart.GetPartById(relationshipId);
+    }
+
+    private static S.Worksheet Worksheet(SpreadsheetDocument document, string name) =>
+        WorksheetPart(document, name).Worksheet
+        ?? throw new InvalidOperationException($"Worksheet '{name}' is required.");
+
+    private static S.Cell Cell(S.Worksheet worksheet, string reference) =>
+        worksheet.Descendants<S.Cell>().Single(cell => cell.CellReference?.Value == reference);
+}
