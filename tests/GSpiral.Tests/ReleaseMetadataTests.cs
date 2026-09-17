@@ -20,6 +20,17 @@ public sealed class ReleaseMetadataTests
         Assert.True(File.Exists(Path.Combine(root, "src", "GSpiral", "Assets", "G-Spiral-icon.png")));
     }
 
+    [Fact]
+    public void MainWindow_ShowsSpiralIconAndExplainsBothPercentSemantics()
+    {
+        var root = FindRepositoryRoot();
+        var xaml = File.ReadAllText(Path.Combine(root, "src", "GSpiral", "MainWindow.xaml"));
+
+        Assert.Contains("Icon=\"Assets/G-Spiral.ico\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ResultsPercentExplanation", xaml, StringComparison.Ordinal);
+        Assert.Contains("PieShareExplanation", xaml, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
