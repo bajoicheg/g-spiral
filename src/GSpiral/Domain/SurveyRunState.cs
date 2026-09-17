@@ -32,6 +32,21 @@ public sealed class SurveyRunState
         }
     }
 
+    public bool IsDisplaySelected(DisplayOptionDefinition option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        return option.AtomicOptionIds.Count > 0 && option.AtomicOptionIds.All(IsSelected);
+    }
+
+    public void SetDisplaySelected(DisplayOptionDefinition option, bool selected)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        foreach (var optionId in option.AtomicOptionIds)
+        {
+            SetSelected(optionId, selected);
+        }
+    }
+
     public void SetRandomizedOrder(IReadOnlyList<IReadOnlyList<string>> orderByStage)
     {
         ArgumentNullException.ThrowIfNull(orderByStage);
