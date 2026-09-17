@@ -1,0 +1,45 @@
+<Window x:Class="GSpiral.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="О программе — G-Spiral"
+        Width="650" Height="470" MinWidth="560" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Background="#F6F7FB" FontFamily="Segoe UI">
+    <Grid Margin="28">
+        <Border Background="White" CornerRadius="18" Padding="34">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <TextBlock Text="G-Spiral" FontSize="30" FontWeight="SemiBold" Foreground="#1F2937"/>
+                    <TextBlock Text="Версия 1.2.0" FontSize="14" Foreground="#667085" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Row="1" Height="4" Margin="0,20,0,22" CornerRadius="2">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#6366F1" Offset="0"/>
+                            <GradientStop Color="#14B8A6" Offset="0.55"/>
+                            <GradientStop Color="#F59E0B" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+                <StackPanel Grid.Row="2">
+                    <TextBlock Text="G-Spiral — локальное Windows-приложение для структурированного опроса и визуализации корпоративных культур. Цветовой подход вдохновлён Spiral Dynamics Дона Бека и Криса Коуэна, основанной на работах Клэра Грейвза. Программа не является официальным диагностическим инструментом Spiral Dynamics и предназначена для практической визуализации ответов."
+                               TextWrapping="Wrap" FontSize="15" LineHeight="23" Foreground="#374151"/>
+                    <TextBlock Text="Проект работает локально: ответы не отправляются во внешние сервисы."
+                               TextWrapping="Wrap" FontSize="14" Foreground="#667085" Margin="0,18,0,0"/>
+                    <TextBlock Text="github.com/bajoicheg/g-spiral" FontSize="14" Foreground="#4F46E5" Margin="0,18,0,0"/>
+                </StackPanel>
+                <Grid Grid.Row="3" Margin="0,24,0,0">
+                    <TextBlock Text="© 2026 V. Vasilev" Foreground="#6B7280" FontSize="13" VerticalAlignment="Center"/>
+                    <Button Content="Закрыть" Width="100" Height="38" HorizontalAlignment="Right" IsCancel="True"
+                            Background="#26364A" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
