@@ -24,81 +24,49 @@ public sealed class Pie3DChartControl : FrameworkElement
 
         var items = Items?.Where(item => item.Score > 0d).ToArray() ?? [];
         var total = items.Sum(item => item.Score);
-        if (items.Length == 0 || total <= 0d || ActualWidth <= 20 || ActualHeight <= 20)
+        if (items.Length == 0 || total <= 0d || ActualWidth <= 20d || ActualHeight <= 20d)
         {
             return;
         }
 
-        var depth = Math.Min(18d, ActualHeight * 0.07d);
-        var width = Math.Max(40d, ActualWidth - 20d);
-        var height = Math.Max(28d, (ActualHeight - depth - 20d) * 0.62d);
+        var depth = Math.Clamp(ActualHeight * 0.075d, 16d, 24d);
+        var radiusX = Math.Max(40d, (ActualWidth - 28d) / 2d);
+        var radiusY = Math.Max(28d, Math.Min(radiusX * 0.52d, (ActualHeight - depth - 30d) / 2d));
         var center = new Point(ActualWidth / 2d, (ActualHeight - depth) / 2d);
-        var radiusX = width / 2d;
-        var radiusY = height / 2d;
+        var slices = new List<(Pie3DSliceGeometry Geometry, Brush TopBrush, Brush SideBrush)>();
 
         var angle = -90d;
         foreach (var item in items)
         {
             var sweep = item.Score / total * 360d;
             var color = (Color)ColorConverter.ConvertFromString(item.PrimaryHex);
-            var sideColor = Color.FromRgb(
-                (byte)(color.R * 0.68),
-                (byte)(color.G * 0.68),
-                (byte)(color.B * 0.68));
-            DrawSlice(drawingContext, center with { Y = center.Y + depth }, radiusX, radiusY, angle, sweep, new SolidColorBrush(sideColor));
+            var sideColor = Darken(color, 0.64d);
+            slices.Add((
+                Pie3DGeometryBuilder.BuildSlice(angle, sweep, center, radiusX, radiusY, depth),
+                new SolidColorBrush(color),
+                new SolidColorBrush(sideColor)));
             angle += sweep;
         }
 
-        angle = -90d;
-        foreach (var item in items)
+        var sidePen = new Pen(new SolidColorBrush(Color.FromArgb(90, 255, 255, 255)), 0.8d);
+        foreach (var slice in slices)
         {
-            var sweep = item.Score / total * 360d;
-            var color = (Color)ColorConverter.ConvertFromString(item.PrimaryHex);
-            DrawSlice(drawingContext, center, radiusX, radiusY, angle, sweep, new SolidColorBrush(color));
-            angle += sweep;
+            foreach (var side in slice.Geometry.Sides)
+            {
+                drawingContext.DrawGeometry(slice.SideBrush, sidePen, side);
+            }
+        }
+
+        var topPen = new Pen(Brushes.White, 1.4d);
+        foreach (var slice in slices)
+        {
+            drawingContext.DrawGeometry(slice.TopBrush, topPen, slice.Geometry.Top);
         }
     }
 
-    private static void DrawSlice(
-        DrawingContext drawingContext,
-        Point center,
-        double radiusX,
-        double radiusY,
-        double startAngle,
-        double sweepAngle,
-        Brush fill)
-    {
-        if (sweepAngle >= 359.999d)
-        {
-            drawingContext.DrawEllipse(fill, new Pen(Brushes.White, 1.2), center, radiusX, radiusY);
-            return;
-        }
-
-        var start = PointOnEllipse(center, radiusX, radiusY, startAngle);
-        var end = PointOnEllipse(center, radiusX, radiusY, startAngle + sweepAngle);
-        var geometry = new StreamGeometry();
-        using (var context = geometry.Open())
-        {
-            context.BeginFigure(center, true, true);
-            context.LineTo(start, true, false);
-            context.ArcTo(
-                end,
-                new Size(radiusX, radiusY),
-                0d,
-                sweepAngle > 180d,
-                SweepDirection.Clockwise,
-                true,
-                false);
-        }
-        geometry.Freeze();
-        drawingContext.DrawGeometry(fill, new Pen(Brushes.White, 1.2), geometry);
-    }
-
-    private static Point PointOnEllipse(Point center, double radiusX, double radiusY, double degrees)
-    {
-        var radians = degrees * Math.PI / 180d;
-        return new Point(
-            center.X + radiusX * Math.Cos(radians),
-            center.Y + radiusY * Math.Sin(radians));
-    }
+    private static Color Darken(Color color, double factor) =>
+        Color.FromRgb(
+            (byte)Math.Clamp(Math.Round(color.R * factor), 0d, 255d),
+            (byte)Math.Clamp(Math.Round(color.G * factor), 0d, 255d),
+            (byte)Math.Clamp(Math.Round(color.B * factor), 0d, 255d));
 }
