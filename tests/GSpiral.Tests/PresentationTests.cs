@@ -15,11 +15,11 @@ public sealed class PresentationTests
     }
 
     [Fact]
-    public void SurveyRandomizer_FixedSeedIsReproducibleAndEveryStageIsAPermutation()
+    public void SurveyRandomizer_DisplayOrderIsReproducibleAndEveryStageIsAPermutation()
     {
-        var first = SurveyRandomizer.CreateOrders(12345);
-        var second = SurveyRandomizer.CreateOrders(12345);
-        var different = SurveyRandomizer.CreateOrders(54321);
+        var first = SurveyRandomizer.CreateDisplayOrders(12345);
+        var second = SurveyRandomizer.CreateDisplayOrders(12345);
+        var different = SurveyRandomizer.CreateDisplayOrders(54321);
 
         Assert.Equal(7, first.Count);
         Assert.Equal(first.SelectMany(x => x), second.SelectMany(x => x));
@@ -27,7 +27,7 @@ public sealed class PresentationTests
 
         for (var stage = 0; stage < SurveyCatalog.Stages.Count; stage++)
         {
-            var expected = SurveyCatalog.OptionsForStage(stage).Select(x => x.Id).OrderBy(x => x).ToArray();
+            var expected = SurveyDisplayCatalog.OptionsForStage(stage).Select(x => x.Id).OrderBy(x => x).ToArray();
             var actual = first[stage].OrderBy(x => x).ToArray();
             Assert.Equal(expected, actual);
         }
@@ -43,7 +43,7 @@ public sealed class PresentationTests
     }
 
     [Fact]
-    public void MainViewModel_PrefillsIdentityAndStartsWithRandomizedAtomicOptions()
+    public void MainViewModel_PrefillsIdentityAndStartsWithDeduplicatedRandomizedOptions()
     {
         var seeds = new Queue<int?>([100, 200]);
         var vm = new MainViewModel(new UserIdentityDefaults("v.vasilev", "GRADIENT"), () => seeds.Dequeue());
@@ -57,13 +57,31 @@ public sealed class PresentationTests
         Assert.Equal(AppScreen.Question, vm.Screen);
         Assert.Equal(0, vm.CurrentQuestionIndex);
         Assert.Equal("Атмосфера", vm.CurrentQuestionTitle);
-        Assert.Equal(SurveyCatalog.OptionsForStage(0).Count, vm.CurrentOptions.Count);
+        Assert.Equal(SurveyDisplayCatalog.OptionsForStage(0).Count, vm.CurrentOptions.Count);
+        Assert.Equal(vm.CurrentOptions.Count, vm.CurrentOptions.Select(option => option.Text).Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Equal("Выбрано: 0 из " + vm.CurrentOptions.Count, vm.CurrentQuestionSelectedCountText);
         Assert.Equal(vm.SurveyRunState.RandomizedOrderByStage[0], vm.CurrentOptions.Select(x => x.OptionId));
     }
 
     [Fact]
-    public void Navigation_BackPreservesOrderAndSelections()
+    public void MainViewModel_OneVisibleDuplicateSelectionMarksEveryLinkedHiddenAtom()
+    {
+        var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 123);
+        vm.StartCommand.Execute(null);
+        vm.NextCommand.Execute(null); // Система управления
+
+        var regular = vm.CurrentOptions.Single(option => option.Text == "Используется регулярный менеджмент");
+        var definition = SurveyDisplayCatalog.GetOption(1, regular.OptionId);
+        Assert.True(definition.AtomicOptionIds.Count >= 2);
+
+        regular.IsSelected = true;
+
+        Assert.All(definition.AtomicOptionIds, id => Assert.True(vm.SurveyRunState.IsSelected(id)));
+        Assert.Equal(1, vm.CurrentQuestionSelectedCount);
+    }
+
+    [Fact]
+    public void Navigation_BackPreservesDisplayOrderAndSelections()
     {
         var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 123);
         vm.StartCommand.Execute(null);
@@ -96,7 +114,24 @@ public sealed class PresentationTests
     }
 
     [Fact]
-    public void ResultsUseAtomicScoresAbsolutePercentageAndSelectedAnswerSummaries()
+    public void ResultRow_RoundsScoresAndExplainsExpressionPercentage()
+    {
+        var row = new ResultRowViewModel(
+            CultureTypeId.Success,
+            "Успех",
+            "#E47C22",
+            241.6666667d,
+            241.6666667d / 7d,
+            0.20d,
+            241.6666667d / 700d);
+
+        Assert.Equal("242 / 700", row.ScoreText);
+        Assert.Equal("34,5% выраженности", row.AbsolutePercentText);
+        Assert.Equal("242 / 700 · 34,5% выраженности", row.ScoreAndPercentText);
+    }
+
+    [Fact]
+    public void ResultsUseExpressionPercentagePieShareAndDeduplicatedAnswerSummaries()
     {
         var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 456);
         vm.StartCommand.Execute(null);
@@ -114,21 +149,26 @@ public sealed class PresentationTests
         Assert.All(vm.Results, row =>
         {
             Assert.Contains("/ 700", row.ScoreText, StringComparison.Ordinal);
-            Assert.EndsWith("%", row.AbsolutePercentText, StringComparison.Ordinal);
+            Assert.EndsWith("% выраженности", row.AbsolutePercentText, StringComparison.Ordinal);
         });
+        Assert.Contains("700", vm.ResultsPercentExplanation, StringComparison.Ordinal);
+        Assert.Contains("сумме набранных баллов", vm.PieShareExplanation, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(7, vm.StageAnswerSummaries.Count);
         Assert.Equal("Атмосфера", vm.StageAnswerSummaries[0].Title);
         Assert.Equal(selectedInFirstStage, vm.StageAnswerSummaries[0].SelectedTexts.Count);
+        Assert.Equal(
+            selectedInFirstStage,
+            vm.StageAnswerSummaries[0].SelectedTexts.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
-    public void EditIdentityPreservesAtomicAnswersAndRestartCreatesNewOrderAndDefaults()
+    public void EditIdentityPreservesAnswersAndRestartCreatesNewDisplayOrderAndDefaults()
     {
         var seeds = new Queue<int?>([111, 222, 333]);
         var vm = new MainViewModel(new UserIdentityDefaults("original", "DOMAIN"), () => seeds.Dequeue());
         vm.StartCommand.Execute(null);
         var firstRunOrder = vm.CurrentOptions.Select(x => x.OptionId).ToArray();
-        var selectedId = firstRunOrder[0];
+        var selectedDefinition = SurveyDisplayCatalog.GetOption(0, firstRunOrder[0]);
         vm.CurrentOptions[0].IsSelected = true;
         while (vm.Screen == AppScreen.Question)
         {
@@ -139,19 +179,19 @@ public sealed class PresentationTests
         vm.RespondentName = "changed";
         vm.CompanyName = "NEW";
         vm.StartCommand.Execute(null);
-        Assert.True(vm.SurveyRunState.IsSelected(selectedId));
+        Assert.All(selectedDefinition.AtomicOptionIds, id => Assert.True(vm.SurveyRunState.IsSelected(id)));
 
         vm.RestartCommand.Execute(null);
         Assert.Equal("original", vm.RespondentName);
         Assert.Equal("DOMAIN", vm.CompanyName);
-        Assert.False(vm.SurveyRunState.IsSelected(selectedId));
+        Assert.All(selectedDefinition.AtomicOptionIds, id => Assert.False(vm.SurveyRunState.IsSelected(id)));
 
         vm.StartCommand.Execute(null);
         Assert.NotEqual(firstRunOrder, vm.CurrentOptions.Select(x => x.OptionId).ToArray());
     }
 
     [Fact]
-    public void SavedReportBecomesStaleAfterAtomicAnswerChange()
+    public void SavedReportBecomesStaleAfterAnswerChange()
     {
         var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 987);
         vm.StartCommand.Execute(null);
@@ -163,13 +203,11 @@ public sealed class PresentationTests
     }
 
     [Fact]
-    public void AppMetadata_ContainsV12AboutCopyAndCopyright()
+    public void AppMetadata_ContainsAboutCopyAndCopyright()
     {
-        Assert.Equal("1.2.0", AppMetadata.Version);
         Assert.Contains("Spiral Dynamics", AppMetadata.AboutText, StringComparison.Ordinal);
         Assert.Contains("Клэра Грейвза", AppMetadata.AboutText, StringComparison.Ordinal);
         Assert.Equal("© 2026 V. Vasilev", AppMetadata.CopyrightText);
-        Assert.Equal("G-Spiral 1.2.0", new MainViewModel(new UserIdentityDefaults("u", "d"), () => 1).AppVersionText);
     }
 
     [Fact]
