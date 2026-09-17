@@ -44,6 +44,39 @@ public sealed class CatalogAndScoringTests
     }
 
     [Fact]
+    public void DisplayCatalog_DeduplicatesIdenticalTextWithinStageAndKeepsAllHiddenContributions()
+    {
+        var stage = SurveyCatalog.Stages.Single(stage => stage.Title == "Система управления");
+        var display = SurveyCatalog.DisplayOptionsForStage(stage.Index);
+        var regular = display.Single(option => option.Text == "Используется регулярный менеджмент");
+
+        Assert.Equal(1, display.Count(option => option.Text == "Используется регулярный менеджмент"));
+        Assert.Equal(2, regular.AtomicOptionIds.Count);
+        Assert.Equal(
+            regular.AtomicOptionIds.Count,
+            regular.AtomicOptionIds.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(
+            display.Count,
+            display.Select(option => option.Text).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    [Fact]
+    public void DisplaySelection_SelectsAllLinkedAtomsAndScoresEveryLinkedTypeIndependently()
+    {
+        var stage = SurveyCatalog.Stages.Single(stage => stage.Title == "Система управления");
+        var regular = SurveyCatalog.DisplayOptionsForStage(stage.Index)
+            .Single(option => option.Text == "Используется регулярный менеджмент");
+        var run = SurveyRandomizer.CreateRun(1234);
+
+        run.SetDisplaySelected(regular, true);
+
+        Assert.All(regular.AtomicOptionIds, optionId => Assert.True(run.IsSelected(optionId)));
+        var results = ResultCalculator.Calculate(run);
+        Assert.True(results.Single(result => result.TypeId == CultureTypeId.Success).Score > 0d);
+        Assert.True(results.Single(result => result.TypeId == CultureTypeId.Rules).Score > 0d);
+    }
+
+    [Fact]
     public void CellScore_UsesProportionalHundredPointWeightWithoutPrematureRounding()
     {
         var cell = new CellDefinition(
@@ -100,7 +133,7 @@ public sealed class CatalogAndScoringTests
     }
 
     [Fact]
-    public void Calculate_SelectingAllOptionsOfOneType_ReturnsSevenHundredAndSixteenPointSevenPercent()
+    public void Calculate_SelectingAllOptionsOfOneType_ReturnsSevenHundredAndHundredPercentExpression()
     {
         var state = new SurveyRunState();
         foreach (var cell in SurveyCatalog.Cells.Where(cell => cell.TypeId == CultureTypeId.Opportunities))
@@ -115,12 +148,12 @@ public sealed class CatalogAndScoringTests
         var opportunities = Assert.Single(results, result => result.TypeId == CultureTypeId.Opportunities);
 
         Assert.Equal(700d, opportunities.Score, 10);
-        Assert.Equal(700d / 42d, opportunities.AbsolutePercent, 10);
+        Assert.Equal(100d, opportunities.AbsolutePercent, 10);
         Assert.Equal(1d, opportunities.ChartShare, 10);
     }
 
     [Fact]
-    public void Calculate_AllSelections_TotalFourThousandTwoHundredAndAbsolutePercentsSumToHundred()
+    public void Calculate_AllSelections_ReturnsHundredPercentExpressionForEveryType()
     {
         var state = new SurveyRunState();
         foreach (var option in SurveyCatalog.Cells.SelectMany(cell => cell.Options))
@@ -132,7 +165,7 @@ public sealed class CatalogAndScoringTests
 
         Assert.All(results, result => Assert.Equal(700d, result.Score, 10));
         Assert.Equal(4200d, results.Sum(result => result.Score), 8);
-        Assert.Equal(100d, results.Sum(result => result.AbsolutePercent), 8);
+        Assert.All(results, result => Assert.Equal(100d, result.AbsolutePercent, 8));
         Assert.All(results, result => Assert.Equal(1d / 6d, result.ChartShare, 10));
     }
 
