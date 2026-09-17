@@ -7,12 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>G-Spiral</AssemblyName>
     <RootNamespace>GSpiral</RootNamespace>
-    <Version>1.2.0</Version>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
-    <InformationalVersion>1.2.0</InformationalVersion>
+    <Version>1.3.0</Version>
+    <AssemblyVersion>1.3.0.0</AssemblyVersion>
+    <FileVersion>1.3.0.0</FileVersion>
+    <InformationalVersion>1.3.0</InformationalVersion>
     <Product>G-Spiral</Product>
     <Description>Опрос по типологии корпоративных культур с XLSX-отчётом</Description>
+    <ApplicationIcon>Assets\G-Spiral.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
     <SelfContained>true</SelfContained>
@@ -22,5 +23,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <Resource Include="Assets\G-Spiral.ico" />
   </ItemGroup>
 </Project>
