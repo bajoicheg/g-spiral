@@ -78,7 +78,7 @@ public partial class MainWindow : Window
 
         try
         {
-            ExcelReportExporter.Export(
+            ExcelReportExporterV131.Export(
                 dialog.FileName,
                 vm.TrimmedRespondentName,
                 vm.TrimmedCompanyName,
