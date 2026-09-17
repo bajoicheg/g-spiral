@@ -63,3 +63,36 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/publish/G-Spiral.exe
+
+  release-v1-1-0:
+    if: github.ref == 'refs/heads/feature/build-g-spiral-v1' && github.event.head_commit.message == 'chore: release v1.1.0'
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: G-Spiral-win-x64
+          path: artifacts/publish
+      - name: Create GitHub Release v1.1.0
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.0
+          target_commitish: 00521ac010d66e7fb1f6e1deea726b88541fd860
+          name: G-Spiral 1.1.0
+          body: |
+            Portable Windows x64 release of G-Spiral 1.1.0.
+
+            Основные изменения:
+            - автоматическое заполнение имени пользователя и компании из Windows с возможностью редактирования;
+            - имя файла отчёта: Spiral_<имя>_<компания>_<дата>.xlsx;
+            - имя респондента, компания, дата/время и версия приложения в XLSX;
+            - счётчик выбранных вариантов по вопросу;
+            - отображение балла и доли на итоговом экране;
+            - редактирование имени и компании после прохождения без сброса ответов;
+            - кнопки «Открыть файл» и «Открыть папку» после сохранения;
+            - улучшения accessibility и контрастности.
+
+            Проверка релиза: 22/22 automated tests, Open XML validation, self-contained single-file publish и smoke-test G-Spiral.exe.
+          files: artifacts/publish/G-Spiral.exe
