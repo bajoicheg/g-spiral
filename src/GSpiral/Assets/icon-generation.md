@@ -1,0 +1,1 @@
+The build embeds a multicolor spiral icon derived from the approved G-Spiral artwork.
