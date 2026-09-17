@@ -64,3 +64,21 @@ jobs:
         with:
           generate_release_notes: true
           files: artifacts/publish/G-Spiral.exe
+
+  tag-v1-3-1:
+    if: github.ref == 'refs/heads/feature/v1.3.1' && github.event.head_commit.message == 'release-v1.3.1'
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create tag v1.3.1 from verified source snapshot
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag v1.3.1 4f0682d5ca22919f2a2fc2375ef8af85dd2e6b5d
+          git push origin refs/tags/v1.3.1
