@@ -13,35 +13,56 @@ public enum AppScreen
 
 public sealed class MainViewModel : ObservableObject
 {
+    private static readonly (string Fill, string Border)[] DecorativePalette =
+    [
+        ("#EEF2FF", "#818CF8"),
+        ("#FDF2F8", "#F472B6"),
+        ("#ECFDF3", "#34D399"),
+        ("#FFF7ED", "#FB923C"),
+        ("#F5F3FF", "#A78BFA"),
+        ("#ECFEFF", "#22D3EE"),
+        ("#FEFCE8", "#EAB308"),
+        ("#F0FDFA", "#2DD4BF"),
+    ];
+
     private readonly RelayCommand startCommand;
     private readonly UserIdentityDefaults identityDefaults;
+    private readonly Func<int?> seedProvider;
     private string respondentName = string.Empty;
     private string companyName = string.Empty;
     private string trimmedRespondentName = string.Empty;
     private string trimmedCompanyName = string.Empty;
     private AppScreen screen = AppScreen.Start;
     private int currentQuestionIndex;
-    private IReadOnlyList<AnswerCardViewModel> answerCards = Array.Empty<AnswerCardViewModel>();
+    private IReadOnlyList<AtomicOptionViewModel> currentOptions = Array.Empty<AtomicOptionViewModel>();
     private IReadOnlyList<ResultRowViewModel> results = Array.Empty<ResultRowViewModel>();
+    private IReadOnlyList<StageAnswerSummaryViewModel> stageAnswerSummaries = Array.Empty<StageAnswerSummaryViewModel>();
     private int totalSelections;
     private bool hasSelections;
     private bool isEditingIdentity;
     private string lastSavedReportPath = string.Empty;
+    private SurveyRunState surveyRunState;
 
     public MainViewModel()
-        : this(UserIdentityDefaults.Detect())
+        : this(UserIdentityDefaults.Detect(), () => Random.Shared.Next())
     {
     }
 
     public MainViewModel(UserIdentityDefaults identityDefaults)
+        : this(identityDefaults, () => Random.Shared.Next())
+    {
+    }
+
+    public MainViewModel(UserIdentityDefaults identityDefaults, Func<int?> seedProvider)
     {
         this.identityDefaults = identityDefaults ?? throw new ArgumentNullException(nameof(identityDefaults));
+        this.seedProvider = seedProvider ?? throw new ArgumentNullException(nameof(seedProvider));
         respondentName = identityDefaults.RespondentName;
         companyName = identityDefaults.CompanyName;
         trimmedRespondentName = respondentName.Trim();
         trimmedCompanyName = companyName.Trim();
+        surveyRunState = CreateNewRunState();
 
-        SurveyState = new SurveyState();
         startCommand = new RelayCommand(_ => Start(), _ => CanStart());
         StartCommand = startCommand;
         BackCommand = new RelayCommand(_ => Back());
@@ -49,9 +70,15 @@ public sealed class MainViewModel : ObservableObject
         RestartCommand = new RelayCommand(_ => Restart());
         BackToAnswersCommand = new RelayCommand(_ => BackToAnswers());
         EditIdentityCommand = new RelayCommand(_ => EditIdentity());
+        SelectAllCommand = new RelayCommand(_ => SelectAllCurrent());
+        ClearAllCommand = new RelayCommand(_ => ClearAllCurrent());
     }
 
-    public SurveyState SurveyState { get; }
+    public SurveyRunState SurveyRunState
+    {
+        get => surveyRunState;
+        private set => SetProperty(ref surveyRunState, value);
+    }
 
     public string RespondentName
     {
@@ -62,6 +89,10 @@ public sealed class MainViewModel : ObservableObject
             {
                 startCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(IdentitySummaryText));
+                if (Screen == AppScreen.Results || IsEditingIdentity)
+                {
+                    ClearSavedReport();
+                }
             }
         }
     }
@@ -75,6 +106,10 @@ public sealed class MainViewModel : ObservableObject
             {
                 startCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(IdentitySummaryText));
+                if (Screen == AppScreen.Results || IsEditingIdentity)
+                {
+                    ClearSavedReport();
+                }
             }
         }
     }
@@ -109,25 +144,34 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public string CurrentQuestionTitle => SurveyCatalog.Questions[CurrentQuestionIndex].Title;
-    public string QuestionProgressText => $"Вопрос {CurrentQuestionIndex + 1} из {SurveyCatalog.Questions.Count}";
-    public string NextButtonText => CurrentQuestionIndex == SurveyCatalog.Questions.Count - 1 ? "Показать результаты" : "Далее →";
+    public string CurrentQuestionTitle => SurveyCatalog.Stages[CurrentQuestionIndex].Title;
+    public string QuestionProgressText => $"Вопрос {CurrentQuestionIndex + 1} из {SurveyCatalog.Stages.Count}";
+    public string NextButtonText => CurrentQuestionIndex == SurveyCatalog.Stages.Count - 1 ? "Показать результаты" : "Далее →";
+    public int CurrentQuestionSelectedCount => CurrentOptions.Count(option => option.IsSelected);
+    public string CurrentQuestionSelectedCountText => $"Выбрано: {CurrentQuestionSelectedCount} из {CurrentOptions.Count}";
 
-    public int CurrentQuestionSelectedCount =>
-        SurveyCatalog.Types.Count(type => SurveyState.IsSelected(CurrentQuestionIndex, type.Id));
-
-    public string CurrentQuestionSelectedCountText => $"Выбрано: {CurrentQuestionSelectedCount}";
-
-    public IReadOnlyList<AnswerCardViewModel> AnswerCards
+    public IReadOnlyList<AtomicOptionViewModel> CurrentOptions
     {
-        get => answerCards;
-        private set => SetProperty(ref answerCards, value);
+        get => currentOptions;
+        private set
+        {
+            if (SetProperty(ref currentOptions, value))
+            {
+                NotifySelectionCount();
+            }
+        }
     }
 
     public IReadOnlyList<ResultRowViewModel> Results
     {
         get => results;
         private set => SetProperty(ref results, value);
+    }
+
+    public IReadOnlyList<StageAnswerSummaryViewModel> StageAnswerSummaries
+    {
+        get => stageAnswerSummaries;
+        private set => SetProperty(ref stageAnswerSummaries, value);
     }
 
     public int TotalSelections
@@ -177,9 +221,9 @@ public sealed class MainViewModel : ObservableObject
         ? "Изменения применятся к результату и следующему XLSX. Ответы сохранятся."
         : "Имя и компания определены из Windows. При необходимости их можно исправить перед началом.";
     public string AppVersionText => $"{AppMetadata.ProductName} {AppMetadata.Version}";
-
     public DateOnly CurrentReportDate => DateOnly.FromDateTime(DateTime.Now);
     public string IdentitySummaryText => $"{RespondentName} · {CompanyName} · {CurrentReportDate:dd.MM.yyyy}";
+    public string TotalSelectionsText => $"Всего выбрано утверждений: {TotalSelections}";
 
     public bool Progress1 => CurrentQuestionIndex >= 0;
     public bool Progress2 => CurrentQuestionIndex >= 1;
@@ -195,12 +239,17 @@ public sealed class MainViewModel : ObservableObject
     public ICommand RestartCommand { get; }
     public ICommand BackToAnswersCommand { get; }
     public ICommand EditIdentityCommand { get; }
+    public ICommand SelectAllCommand { get; }
+    public ICommand ClearAllCommand { get; }
 
     public void MarkReportSaved(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         LastSavedReportPath = path;
     }
+
+    private SurveyRunState CreateNewRunState() =>
+        new(SurveyRandomizer.CreateOrders(seedProvider()));
 
     private bool CanStart() =>
         !string.IsNullOrWhiteSpace(RespondentName) &&
@@ -223,8 +272,8 @@ public sealed class MainViewModel : ObservableObject
         }
 
         CurrentQuestionIndex = 0;
+        RebuildCurrentOptions();
         Screen = AppScreen.Question;
-        RebuildAnswerCards();
     }
 
     private void Back()
@@ -236,15 +285,15 @@ public sealed class MainViewModel : ObservableObject
         }
 
         CurrentQuestionIndex--;
-        RebuildAnswerCards();
+        RebuildCurrentOptions();
     }
 
     private void Next()
     {
-        if (CurrentQuestionIndex < SurveyCatalog.Questions.Count - 1)
+        if (CurrentQuestionIndex < SurveyCatalog.Stages.Count - 1)
         {
             CurrentQuestionIndex++;
-            RebuildAnswerCards();
+            RebuildCurrentOptions();
             return;
         }
 
@@ -254,8 +303,8 @@ public sealed class MainViewModel : ObservableObject
 
     private void BackToAnswers()
     {
-        CurrentQuestionIndex = SurveyCatalog.Questions.Count - 1;
-        RebuildAnswerCards();
+        CurrentQuestionIndex = SurveyCatalog.Stages.Count - 1;
+        RebuildCurrentOptions();
         Screen = AppScreen.Question;
     }
 
@@ -267,15 +316,16 @@ public sealed class MainViewModel : ObservableObject
 
     private void Restart()
     {
-        SurveyState.Reset();
+        SurveyRunState = CreateNewRunState();
         RespondentName = identityDefaults.RespondentName;
         CompanyName = identityDefaults.CompanyName;
         TrimmedRespondentName = RespondentName.Trim();
         TrimmedCompanyName = CompanyName.Trim();
         IsEditingIdentity = false;
         CurrentQuestionIndex = 0;
-        AnswerCards = Array.Empty<AnswerCardViewModel>();
+        CurrentOptions = Array.Empty<AtomicOptionViewModel>();
         Results = Array.Empty<ResultRowViewModel>();
+        StageAnswerSummaries = Array.Empty<StageAnswerSummaryViewModel>();
         TotalSelections = 0;
         HasSelections = false;
         ClearSavedReport();
@@ -283,41 +333,85 @@ public sealed class MainViewModel : ObservableObject
         NotifySelectionCount();
     }
 
-    private void RebuildAnswerCards()
+    private void RebuildCurrentOptions()
     {
-        var question = SurveyCatalog.Questions[CurrentQuestionIndex];
-        var questionIndex = CurrentQuestionIndex;
-        AnswerCards = SurveyCatalog.Types
-            .Select(type => new AnswerCardViewModel(
-                type.Id,
-                type.Name,
-                question.Options[type.Id],
-                type.PrimaryHex,
-                type.LightHex,
-                SurveyState.IsSelected(questionIndex, type.Id),
-                selected =>
-                {
-                    SurveyState.SetSelected(questionIndex, type.Id, selected);
-                    ClearSavedReport();
-                    NotifySelectionCount();
-                }))
+        var byId = SurveyCatalog.OptionsForStage(CurrentQuestionIndex)
+            .ToDictionary(option => option.Id, StringComparer.Ordinal);
+        var order = SurveyRunState.RandomizedOrderByStage[CurrentQuestionIndex];
+
+        CurrentOptions = order
+            .Select((id, displayIndex) =>
+            {
+                var option = byId[id];
+                var decorative = DecorativePalette[displayIndex % DecorativePalette.Length];
+                return new AtomicOptionViewModel(
+                    option.Id,
+                    option.Text,
+                    decorative.Fill,
+                    decorative.Border,
+                    SurveyRunState.IsSelected(option.Id),
+                    selected =>
+                    {
+                        SurveyRunState.SetSelected(option.Id, selected);
+                        ClearSavedReport();
+                        NotifySelectionCount();
+                    });
+            })
             .ToArray();
+
+        NotifySelectionCount();
+    }
+
+    private void SelectAllCurrent()
+    {
+        foreach (var option in CurrentOptions)
+        {
+            option.IsSelected = true;
+        }
+        NotifySelectionCount();
+    }
+
+    private void ClearAllCurrent()
+    {
+        foreach (var option in CurrentOptions)
+        {
+            option.IsSelected = false;
+        }
         NotifySelectionCount();
     }
 
     private void RefreshResults()
     {
-        Results = ResultCalculator.Calculate(SurveyState)
-            .Select(x => new ResultRowViewModel(x.TypeId, x.Name, x.PrimaryHex, x.Score, x.Share, x.Score / 7d))
+        Results = ResultCalculator.Calculate(SurveyRunState)
+            .Select(result => new ResultRowViewModel(
+                result.TypeId,
+                result.Name,
+                result.PrimaryHex,
+                result.Score,
+                result.AbsolutePercent,
+                result.ChartShare,
+                result.Score / 700d))
             .ToArray();
-        TotalSelections = Results.Sum(x => x.Score);
-        HasSelections = TotalSelections > 0;
+
+        TotalSelections = SurveyRunState.SelectedOptionIds.Count;
+        HasSelections = Results.Sum(result => result.Score) > 0d;
+        OnPropertyChanged(nameof(TotalSelectionsText));
+
+        StageAnswerSummaries = SurveyCatalog.Stages
+            .Select(stage =>
+            {
+                var byId = SurveyCatalog.OptionsForStage(stage.Index)
+                    .ToDictionary(option => option.Id, StringComparer.Ordinal);
+                var selectedTexts = SurveyRunState.RandomizedOrderByStage[stage.Index]
+                    .Where(SurveyRunState.IsSelected)
+                    .Select(id => byId[id].Text)
+                    .ToArray();
+                return new StageAnswerSummaryViewModel(stage.Index, stage.Title, selectedTexts);
+            })
+            .ToArray();
     }
 
-    private void ClearSavedReport()
-    {
-        LastSavedReportPath = string.Empty;
-    }
+    private void ClearSavedReport() => LastSavedReportPath = string.Empty;
 
     private void NotifySelectionCount()
     {
