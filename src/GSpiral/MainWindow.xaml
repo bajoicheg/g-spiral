@@ -7,11 +7,16 @@
         xmlns:controls="clr-namespace:GSpiral.Controls"
         mc:Ignorable="d"
         Title="G-Spiral — Корпоративная культура"
-        Width="1200" Height="800" MinWidth="900" MinHeight="650"
+        Width="1240" Height="840" MinWidth="940" MinHeight="680"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
-        Background="#F7F8FA">
+        Background="#F4F6FA">
     <Window.Resources>
+        <LinearGradientBrush x:Key="AppGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F5F7FF" Offset="0"/>
+            <GradientStop Color="#F5FBFA" Offset="0.52"/>
+            <GradientStop Color="#FFF9F2" Offset="1"/>
+        </LinearGradientBrush>
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#26364A"/>
             <Setter Property="Foreground" Value="White"/>
@@ -19,10 +24,11 @@
             <Setter Property="Padding" Value="22,11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="42"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -30,31 +36,18 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.92"/></Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Background" Value="#E7EBF0"/>
+            <Setter Property="Background" Value="#E8ECF2"/>
             <Setter Property="Foreground" Value="#26364A"/>
         </Style>
-        <Style x:Key="SavedActionButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Visibility" Value="Collapsed"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+        <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#F3F5F8"/>
             <Setter Property="Foreground" Value="#4B5563"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-        </Style>
-        <Style x:Key="IdentityTextBox" TargetType="TextBox">
-            <Setter Property="FontSize" Value="17"/>
-            <Setter Property="Padding" Value="13,11"/>
-            <Setter Property="MinHeight" Value="48"/>
-            <Setter Property="BorderBrush" Value="#AEB8C5"/>
-            <Setter Property="BorderThickness" Value="1.5"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="MinHeight" Value="36"/>
         </Style>
         <Style x:Key="ScreenStart" TargetType="Grid">
             <Setter Property="Visibility" Value="Collapsed"/>
@@ -69,22 +62,22 @@
             <Style.Triggers><DataTrigger Binding="{Binding Screen}" Value="{x:Static vm:AppScreen.Results}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
         </Style>
         <Style x:Key="ProgressSegment" TargetType="Border">
-            <Setter Property="Background" Value="#D9DEE7"/>
-            <Setter Property="Height" Value="5"/>
+            <Setter Property="Background" Value="#D8DEE8"/>
+            <Setter Property="Height" Value="6"/>
             <Setter Property="CornerRadius" Value="3"/>
             <Setter Property="Margin" Value="3,0"/>
-            <Style.Triggers><DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True"><Setter Property="Background" Value="#26364A"/></DataTrigger></Style.Triggers>
+            <Style.Triggers><DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True"><Setter Property="Background" Value="#4F46E5"/></DataTrigger></Style.Triggers>
         </Style>
-        <Style x:Key="CompactProgressBar" TargetType="ProgressBar">
-            <Setter Property="Height" Value="8"/>
+        <Style x:Key="ResultProgress" TargetType="ProgressBar">
+            <Setter Property="Height" Value="9"/>
             <Setter Property="Background" Value="#E9EDF2"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid ClipToBounds="True">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="4"/>
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{TemplateBinding Foreground}" CornerRadius="4"/>
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{TemplateBinding Foreground}" CornerRadius="5"/>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -92,162 +85,211 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="38">
-        <Grid Style="{StaticResource ScreenStart}">
-            <Border MaxWidth="760" Padding="44" Background="White" CornerRadius="18" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel>
-                    <TextBlock Text="{Binding AppVersionText}" FontSize="15" FontWeight="SemiBold" Foreground="#6B7280"/>
-                    <TextBlock Text="{Binding IdentityScreenTitle}" FontSize="33" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,12,0,8" TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding IdentityScreenDescription}" FontSize="15" Foreground="#5F6B7A" TextWrapping="Wrap" Margin="0,0,0,24"/>
-                    <TextBlock Text="Имя" Style="{StaticResource FieldLabel}"/>
-                    <TextBox Text="{Binding RespondentName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource IdentityTextBox}" ToolTip="Имя респондента" AutomationProperties.Name="Имя респондента"/>
-                    <TextBlock Text="Компания" Style="{StaticResource FieldLabel}" Margin="0,18,0,6"/>
-                    <TextBox Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource IdentityTextBox}" ToolTip="Название компании" AutomationProperties.Name="Компания"/>
-                    <TextBlock Text="Ответьте на 7 вопросов. В каждом можно выбрать от нуля до всех шести вариантов." FontSize="14" Foreground="#667085" TextWrapping="Wrap" Margin="0,20,0,0"/>
-                    <Button Content="{Binding StartActionText}" Command="{Binding StartCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,22,0,0" IsDefault="True"/>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <Grid Style="{StaticResource ScreenQuestion}">
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <Grid Grid.Row="0" Margin="4,0,4,18">
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <TextBlock Text="{Binding IdentitySummaryText}" FontSize="15" Foreground="#5F6B7A"/>
-                <Grid Grid.Row="1" Margin="0,15,0,4">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding QuestionProgressText}" FontSize="14" FontWeight="SemiBold" Foreground="#6B7280"/>
-                    <Border Grid.Column="1" Background="#E7EBF0" CornerRadius="12" Padding="10,4">
-                        <TextBlock Text="{Binding CurrentQuestionSelectedCountText}" FontSize="13" FontWeight="SemiBold" Foreground="#374151"/>
-                    </Border>
-                </Grid>
-                <StackPanel Grid.Row="2">
-                    <TextBlock Text="{Binding CurrentQuestionTitle}" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937" TextWrapping="Wrap"/>
-                    <TextBlock Text="Выберите все варианты, которые соответствуют вашей компании. Можно не выбирать ни одного." FontSize="15" Foreground="#667085" Margin="0,7,0,0"/>
-                </StackPanel>
-            </Grid>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding AnswerCards}" Margin="0,0,0,12">
-                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="2" Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <ToggleButton IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                          Margin="7" Padding="0"
-                                          Background="{Binding LightHex}" BorderBrush="{Binding PrimaryHex}" BorderThickness="2"
-                                          Foreground="#26364A" FocusVisualStyle="{x:Null}" MinHeight="205"
-                                          AutomationProperties.Name="{Binding TypeName}"
-                                          AutomationProperties.HelpText="{Binding Text}">
-                                <ToggleButton.InputBindings><KeyBinding Key="Enter" Command="{Binding ToggleCommand}"/></ToggleButton.InputBindings>
-                                <ToggleButton.Style>
-                                    <Style TargetType="ToggleButton">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="ToggleButton">
-                                                    <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="13" Padding="20">
-                                                        <Grid>
-                                                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                                                            <Grid>
-                                                                <TextBlock Text="{Binding TypeName}" FontSize="18" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
-                                                                <Border x:Name="SelectionMarker" HorizontalAlignment="Right" Width="30" Height="30" CornerRadius="15" Background="#FFFFFF" BorderBrush="{Binding PrimaryHex}" BorderThickness="1.5">
-                                                                    <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="{Binding PrimaryHex}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-                                                                    </TextBlock>
-                                                                </Border>
-                                                            </Grid>
-                                                            <TextBlock Grid.Row="1" Text="{Binding Text}" TextWrapping="Wrap" FontSize="14.5" Foreground="{TemplateBinding Foreground}" Margin="0,14,0,0" LineHeight="21"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsChecked" Value="True">
-                                                            <Setter TargetName="CardBorder" Property="Background" Value="{Binding PrimaryHex}"/>
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                            <Setter TargetName="CardBorder" Property="BorderThickness" Value="3"/>
-                                                            <Setter TargetName="SelectionMarker" Property="BorderBrush" Value="White"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CardBorder" Property="BorderBrush" Value="#111827"/><Setter TargetName="CardBorder" Property="BorderThickness" Value="4"/></Trigger>
-                                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardBorder" Property="Opacity" Value="0.92"/></Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ToggleButton.Style>
-                            </ToggleButton>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-            <Grid Grid.Row="2" Margin="4,14,4,0">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="← Назад" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButton}"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress1}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress2}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress3}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress4}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress5}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress6}"/><Border Width="52" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress7}"/>
-                </StackPanel>
-                <Button Grid.Column="2" Content="{Binding NextButtonText}" Command="{Binding NextCommand}" Style="{StaticResource PrimaryButton}"/>
-            </Grid>
-        </Grid>
-
-        <Grid Style="{StaticResource ScreenResults}">
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <Grid Grid.Row="0" Margin="4,0,4,20">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="Результаты" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937"/>
-                    <TextBlock Text="{Binding IdentitySummaryText}" FontSize="15" Foreground="#536171" Margin="0,6,0,0"/>
-                    <TextBlock Text="Типы организации отсортированы по количеству выбранных соответствий." FontSize="14" Foreground="#667085" Margin="0,5,0,0"/>
-                </StackPanel>
-                <Button Grid.Column="1" Content="Изменить имя и компанию" Command="{Binding EditIdentityCommand}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Top"/>
-            </Grid>
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="1.15*"/><ColumnDefinition Width="0.85*"/></Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="White" CornerRadius="14" Padding="24" Margin="4,0,12,0">
-                    <ItemsControl ItemsSource="{Binding Results}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,8">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="170"/><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
-                                    <Border Width="14" Height="14" CornerRadius="7" Background="{Binding PrimaryHex}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    <ProgressBar Grid.Column="2" Margin="10,0,14,0" Minimum="0" Maximum="7" Value="{Binding Score}" Foreground="{Binding PrimaryHex}" Style="{StaticResource CompactProgressBar}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="3" Text="{Binding ScoreAndShareText}" FontSize="13.5" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#374151"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Border>
-                <Border Grid.Column="1" Background="White" CornerRadius="14" Padding="24" Margin="12,0,4,0">
-                    <Grid>
-                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock Text="Профиль корпоративной культуры" FontSize="19" FontWeight="SemiBold"/>
-                        <Grid Grid.Row="1" Margin="0,14">
-                            <controls:DonutChartControl Items="{Binding Results}" MinHeight="280">
-                                <controls:DonutChartControl.Style><Style TargetType="controls:DonutChartControl"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding HasSelections}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></controls:DonutChartControl.Style>
-                            </controls:DonutChartControl>
-                            <TextBlock Text="Нет выбранных соответствий" FontSize="17" Foreground="#6B7280" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSelections}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-                            </TextBlock>
+    <Grid Background="{StaticResource AppGradient}">
+        <Grid Margin="36">
+            <Grid Style="{StaticResource ScreenStart}">
+                <Border MaxWidth="760" Padding="46" Background="White" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border.Effect><DropShadowEffect BlurRadius="26" ShadowDepth="4" Opacity="0.12"/></Border.Effect>
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="G-Spiral" FontSize="18" FontWeight="SemiBold" Foreground="#5F6C80"/>
+                                <TextBlock Text="{Binding IdentityScreenTitle}" FontSize="34" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,10,0,5" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Content="О программе" Click="About_Click" Style="{StaticResource GhostButton}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                         </Grid>
-                        <ItemsControl Grid.Row="2" ItemsSource="{Binding Results}">
-                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Margin="0,3,15,3"><Border Width="10" Height="10" CornerRadius="5" Background="{Binding PrimaryHex}" Margin="0,0,6,0"/><TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="#4B5563"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+                        <TextBlock Text="{Binding IdentityScreenDescription}" FontSize="15.5" Foreground="#667085" TextWrapping="Wrap" Margin="0,10,0,25"/>
+                        <TextBlock Text="Имя" FontSize="13" FontWeight="SemiBold" Foreground="#475467" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding RespondentName, UpdateSourceTrigger=PropertyChanged}" FontSize="17" Padding="13" MinHeight="50" BorderBrush="#C8D0DA" BorderThickness="1"/>
+                        <TextBlock Text="Компания" FontSize="13" FontWeight="SemiBold" Foreground="#475467" Margin="0,18,0,6"/>
+                        <TextBox Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" FontSize="17" Padding="13" MinHeight="50" BorderBrush="#C8D0DA" BorderThickness="1"/>
+                        <TextBlock Text="Опрос состоит из 7 этапов. В каждом можно выбрать любое количество независимых утверждений — от нуля до всех." FontSize="14" Foreground="#667085" TextWrapping="Wrap" Margin="0,22,0,0"/>
+                        <Grid Margin="0,24,0,0">
+                            <Button Content="{Binding StartActionText}" Command="{Binding StartCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" IsDefault="True"/>
+                            <TextBlock Text="{Binding AppVersionText}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#98A2B3" FontSize="12.5"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid Style="{StaticResource ScreenQuestion}">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Border Grid.Row="0" Background="#EEFFFFFF" CornerRadius="16" Padding="24,18" Margin="0,0,0,14">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="{Binding CompanyName, StringFormat=Корпоративная культура — {0}}" FontSize="14" Foreground="#667085"/>
+                            <Button Content="О программе" Click="About_Click" Style="{StaticResource GhostButton}" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding QuestionProgressText}" FontSize="14" FontWeight="SemiBold" Foreground="#4F46E5" Margin="0,11,0,3"/>
+                        <TextBlock Text="{Binding CurrentQuestionTitle}" FontSize="30" FontWeight="SemiBold" Foreground="#1F2937" TextWrapping="Wrap"/>
+                        <Grid Margin="0,8,0,0">
+                            <TextBlock Text="Выберите все утверждения, которые подходят вашей компании. Порядок вариантов случаен." FontSize="14.5" Foreground="#667085" TextWrapping="Wrap" Margin="0,0,260,0"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding CurrentQuestionSelectedCountText}" FontSize="14" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <Button Content="Выбрать всё" Command="{Binding SelectAllCommand}" Style="{StaticResource GhostButton}" Margin="0,0,6,0"/>
+                                <Button Content="Снять всё" Command="{Binding ClearAllCommand}" Style="{StaticResource GhostButton}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Background="#CFFFFFFF" CornerRadius="16" Padding="12">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding CurrentOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel HorizontalAlignment="Center"/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <ToggleButton IsChecked="{Binding IsSelected, Mode=TwoWay}" Width="340" MinHeight="96" Margin="7" Padding="0" BorderThickness="0"
+                                                  AutomationProperties.Name="{Binding Text}" FocusVisualStyle="{x:Null}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="Card" Background="{Binding DecorativeFill}" BorderBrush="{Binding DecorativeBorder}" BorderThickness="1.5" CornerRadius="13" Padding="18">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="34"/></Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="14.5" LineHeight="20" Foreground="#303846" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Width="27" Height="27" CornerRadius="14" Background="#22FFFFFF" BorderBrush="#55FFFFFF" BorderThickness="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                            <TextBlock x:Name="Check" Text="✓" FontSize="17" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Card" Property="Background" Value="{Binding DecorativeBorder}"/>
+                                                        <Setter TargetName="Card" Property="BorderThickness" Value="3"/>
+                                                        <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="Opacity" Value="0.92"/></Trigger>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="#111827"/><Setter TargetName="Card" Property="BorderThickness" Value="3"/></Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <Border Grid.Row="2" Background="#EEFFFFFF" CornerRadius="14" Padding="18,14" Margin="0,14,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="← Назад" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButton}"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress1}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress2}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress3}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress4}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress5}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress6}"/><Border Width="48" Style="{StaticResource ProgressSegment}" Tag="{Binding Progress7}"/>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="{Binding NextButtonText}" Command="{Binding NextCommand}" Style="{StaticResource PrimaryButton}"/>
                     </Grid>
                 </Border>
             </Grid>
-            <StackPanel Grid.Row="2" Margin="4,16,4,0">
-                <TextBlock Text="{Binding SavedReportStatusText}" FontSize="12.5" Foreground="#526071" TextTrimming="CharacterEllipsis" Margin="0,0,0,8">
-                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-                </TextBlock>
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="Сохранить XLSX" Click="SaveReport_Click" Style="{StaticResource PrimaryButton}"/>
-                    <Button Grid.Column="1" Content="Назад к ответам" Command="{Binding BackToAnswersCommand}" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0"/>
-                    <Button Grid.Column="2" Content="Открыть файл" Click="OpenSavedReport_Click" Style="{StaticResource SavedActionButton}" Margin="10,0,0,0"/>
-                    <Button Grid.Column="3" Content="Открыть папку" Click="OpenSavedFolder_Click" Style="{StaticResource SavedActionButton}" Margin="10,0,0,0"/>
-                    <Button Grid.Column="5" Content="Пройти заново" Command="{Binding RestartCommand}" Style="{StaticResource SecondaryButton}"/>
-                </Grid>
-                <TextBlock Text="{Binding AppVersionText}" FontSize="11.5" Foreground="#8A94A3" HorizontalAlignment="Right" Margin="0,6,0,0"/>
-            </StackPanel>
+
+            <Grid Style="{StaticResource ScreenResults}">
+                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,0,8,8">
+                        <Border Background="#EEFFFFFF" CornerRadius="16" Padding="24" Margin="0,0,0,14">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="Результаты" FontSize="31" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                    <TextBlock Text="{Binding IdentitySummaryText}" FontSize="14" Foreground="#667085" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding TotalSelectionsText}" FontSize="13" Foreground="#98A2B3" Margin="0,3,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <Button Content="Изменить имя и компанию" Command="{Binding EditIdentityCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
+                                    <Button Content="О программе" Click="About_Click" Style="{StaticResource GhostButton}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.08*"/><ColumnDefinition Width="0.92*"/></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="24" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="Итоги по типам" FontSize="20" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,0,0,10"/>
+                                    <ItemsControl ItemsSource="{Binding Results}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,8">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="165"/><ColumnDefinition Width="*"/><ColumnDefinition Width="145"/></Grid.ColumnDefinitions>
+                                                    <Border Width="13" Height="13" CornerRadius="7" Background="{Binding PrimaryHex}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <ProgressBar Grid.Column="2" Minimum="0" Maximum="1" Value="{Binding BarFraction}" Foreground="{Binding PrimaryHex}" Style="{StaticResource ResultProgress}" Margin="10,0,12,0" VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding ScoreText}" FontSize="13.5" Foreground="#4B5563"/>
+                                                        <TextBlock Text=" · " Foreground="#98A2B3"/>
+                                                        <TextBlock Text="{Binding AbsolutePercentText}" FontSize="13.5" FontWeight="SemiBold" Foreground="#344054"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Background="White" CornerRadius="16" Padding="22" Margin="8,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <TextBlock Text="Структура выбранных соответствий" FontSize="19" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                    <Grid Grid.Row="1" MinHeight="310" Margin="0,8">
+                                        <controls:Pie3DChartControl Items="{Binding Results}">
+                                            <controls:Pie3DChartControl.Style>
+                                                <Style TargetType="controls:Pie3DChartControl"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding HasSelections}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style>
+                                            </controls:Pie3DChartControl.Style>
+                                        </controls:Pie3DChartControl>
+                                        <TextBlock Text="Нет выбранных соответствий" FontSize="16" Foreground="#667085" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSelections}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                    <ItemsControl Grid.Row="2" ItemsSource="{Binding Results}">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Margin="0,3,14,3"><Border Width="10" Height="10" CornerRadius="5" Background="{Binding PrimaryHex}" Margin="0,0,6,0"/><TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="#4B5563"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <Border Background="White" CornerRadius="16" Padding="24" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Ваши ответы" FontSize="21" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                <TextBlock Text="Выбранные утверждения показаны в том порядке, в котором они были предъявлены во время опроса." FontSize="13.5" Foreground="#667085" Margin="0,4,0,14" TextWrapping="Wrap"/>
+                                <ItemsControl ItemsSource="{Binding StageAnswerSummaries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,6">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#344054"/>
+                                                        <TextBlock Text="{Binding CountText}" HorizontalAlignment="Right" FontSize="12.5" Foreground="#667085"/>
+                                                    </Grid>
+                                                    <ItemsControl ItemsSource="{Binding SelectedTexts}" Margin="0,7,0,0">
+                                                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=✓ {0}}" TextWrapping="Wrap" FontSize="13.5" Foreground="#475467" Margin="0,2"/></DataTemplate></ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="1" Background="#F5FFFFFF" CornerRadius="14" Padding="16" Margin="0,10,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Сохранить XLSX" Click="SaveReport_Click" Style="{StaticResource PrimaryButton}"/>
+                        <Button Grid.Column="1" Content="Открыть файл" Click="OpenSavedReport_Click" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                        </Button>
+                        <Button Grid.Column="2" Content="Открыть папку" Click="OpenSavedFolder_Click" Margin="8,0,0,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasSavedReport}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                        </Button>
+                        <Button Grid.Column="4" Content="Назад к ответам" Command="{Binding BackToAnswersCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="5" Content="Пройти заново" Command="{Binding RestartCommand}" Style="{StaticResource SecondaryButton}"/>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
