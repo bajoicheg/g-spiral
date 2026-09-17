@@ -1,3 +1,5 @@
+using System.Windows;
+using GSpiral.Controls;
 using GSpiral.Domain;
 using GSpiral.Presentation;
 using GSpiral.Services;
@@ -47,13 +49,10 @@ public sealed class PresentationTests
     {
         var seeds = new Queue<int?>([100, 200]);
         var vm = new MainViewModel(new UserIdentityDefaults("v.vasilev", "GRADIENT"), () => seeds.Dequeue());
-
         Assert.Equal("v.vasilev", vm.RespondentName);
         Assert.Equal("GRADIENT", vm.CompanyName);
         Assert.True(vm.StartCommand.CanExecute(null));
-
         vm.StartCommand.Execute(null);
-
         Assert.Equal(AppScreen.Question, vm.Screen);
         Assert.Equal(0, vm.CurrentQuestionIndex);
         Assert.Equal("Атмосфера", vm.CurrentQuestionTitle);
@@ -68,14 +67,11 @@ public sealed class PresentationTests
     {
         var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 123);
         vm.StartCommand.Execute(null);
-        vm.NextCommand.Execute(null); // Система управления
-
+        vm.NextCommand.Execute(null);
         var regular = vm.CurrentOptions.Single(option => option.Text == "Используется регулярный менеджмент");
         var definition = SurveyDisplayCatalog.GetOption(1, regular.OptionId);
         Assert.True(definition.AtomicOptionIds.Count >= 2);
-
         regular.IsSelected = true;
-
         Assert.All(definition.AtomicOptionIds, id => Assert.True(vm.SurveyRunState.IsSelected(id)));
         Assert.Equal(1, vm.CurrentQuestionSelectedCount);
     }
@@ -87,13 +83,26 @@ public sealed class PresentationTests
         vm.StartCommand.Execute(null);
         var order = vm.CurrentOptions.Select(x => x.OptionId).ToArray();
         vm.CurrentOptions[2].IsSelected = true;
-
         vm.NextCommand.Execute(null);
         vm.BackCommand.Execute(null);
-
         Assert.Equal(order, vm.CurrentOptions.Select(x => x.OptionId).ToArray());
         Assert.True(vm.CurrentOptions.Single(x => x.OptionId == order[2]).IsSelected);
         Assert.Equal("Выбрано: 1 из " + vm.CurrentOptions.Count, vm.CurrentQuestionSelectedCountText);
+    }
+
+    [Fact]
+    public void Navigation_IncrementsScrollResetRevisionForStartNextAndBack()
+    {
+        var vm = new MainViewModel(new UserIdentityDefaults("user", "DOMAIN"), () => 444);
+        var initial = vm.ScrollResetRevision;
+        vm.StartCommand.Execute(null);
+        var afterStart = vm.ScrollResetRevision;
+        vm.NextCommand.Execute(null);
+        var afterNext = vm.ScrollResetRevision;
+        vm.BackCommand.Execute(null);
+        Assert.True(afterStart > initial);
+        Assert.True(afterNext > afterStart);
+        Assert.True(vm.ScrollResetRevision > afterNext);
     }
 
     [Fact]
@@ -103,12 +112,10 @@ public sealed class PresentationTests
         vm.StartCommand.Execute(null);
         vm.SelectAllCommand.Execute(null);
         Assert.All(vm.CurrentOptions, option => Assert.True(option.IsSelected));
-
         vm.NextCommand.Execute(null);
         Assert.All(vm.CurrentOptions, option => Assert.False(option.IsSelected));
         vm.BackCommand.Execute(null);
         Assert.All(vm.CurrentOptions, option => Assert.True(option.IsSelected));
-
         vm.ClearAllCommand.Execute(null);
         Assert.All(vm.CurrentOptions, option => Assert.False(option.IsSelected));
     }
@@ -116,18 +123,19 @@ public sealed class PresentationTests
     [Fact]
     public void ResultRow_RoundsScoresAndExplainsExpressionPercentage()
     {
-        var row = new ResultRowViewModel(
-            CultureTypeId.Success,
-            "Успех",
-            "#E47C22",
-            241.6666667d,
-            241.6666667d / 7d,
-            0.20d,
-            241.6666667d / 700d);
-
+        var row = new ResultRowViewModel(CultureTypeId.Success, "Успех", "#E47C22", 241.6666667d, 241.6666667d / 7d, 0.20d, 241.6666667d / 700d);
         Assert.Equal("242 / 700", row.ScoreText);
         Assert.Equal("34,5% выраженности", row.AbsolutePercentText);
         Assert.Equal("242 / 700 · 34,5% выраженности", row.ScoreAndPercentText);
+    }
+
+    [Fact]
+    public void Pie3DGeometryBuilder_CreatesTopAndVisibleSideFacesInsteadOfSecondFullPie()
+    {
+        var slice = Pie3DGeometryBuilder.BuildSlice(-20d, 130d, new Point(120d, 75d), 100d, 48d, 18d);
+        Assert.NotNull(slice.Top);
+        Assert.NotEmpty(slice.Sides);
+        Assert.Contains(slice.Sides, geometry => geometry.Bounds.Bottom > slice.Top.Bounds.Bottom + 1d);
     }
 
     [Fact]
@@ -137,12 +145,7 @@ public sealed class PresentationTests
         vm.StartCommand.Execute(null);
         vm.SelectAllCommand.Execute(null);
         var selectedInFirstStage = vm.CurrentOptions.Count;
-
-        while (vm.Screen == AppScreen.Question)
-        {
-            vm.NextCommand.Execute(null);
-        }
-
+        while (vm.Screen == AppScreen.Question) vm.NextCommand.Execute(null);
         Assert.Equal(AppScreen.Results, vm.Screen);
         Assert.Equal(selectedInFirstStage, vm.TotalSelections);
         Assert.Equal(6, vm.Results.Count);
@@ -156,9 +159,7 @@ public sealed class PresentationTests
         Assert.Equal(7, vm.StageAnswerSummaries.Count);
         Assert.Equal("Атмосфера", vm.StageAnswerSummaries[0].Title);
         Assert.Equal(selectedInFirstStage, vm.StageAnswerSummaries[0].SelectedTexts.Count);
-        Assert.Equal(
-            selectedInFirstStage,
-            vm.StageAnswerSummaries[0].SelectedTexts.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(selectedInFirstStage, vm.StageAnswerSummaries[0].SelectedTexts.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
@@ -170,22 +171,16 @@ public sealed class PresentationTests
         var firstRunOrder = vm.CurrentOptions.Select(x => x.OptionId).ToArray();
         var selectedDefinition = SurveyDisplayCatalog.GetOption(0, firstRunOrder[0]);
         vm.CurrentOptions[0].IsSelected = true;
-        while (vm.Screen == AppScreen.Question)
-        {
-            vm.NextCommand.Execute(null);
-        }
-
+        while (vm.Screen == AppScreen.Question) vm.NextCommand.Execute(null);
         vm.EditIdentityCommand.Execute(null);
         vm.RespondentName = "changed";
         vm.CompanyName = "NEW";
         vm.StartCommand.Execute(null);
         Assert.All(selectedDefinition.AtomicOptionIds, id => Assert.True(vm.SurveyRunState.IsSelected(id)));
-
         vm.RestartCommand.Execute(null);
         Assert.Equal("original", vm.RespondentName);
         Assert.Equal("DOMAIN", vm.CompanyName);
         Assert.All(selectedDefinition.AtomicOptionIds, id => Assert.False(vm.SurveyRunState.IsSelected(id)));
-
         vm.StartCommand.Execute(null);
         Assert.NotEqual(firstRunOrder, vm.CurrentOptions.Select(x => x.OptionId).ToArray());
     }
@@ -197,7 +192,6 @@ public sealed class PresentationTests
         vm.StartCommand.Execute(null);
         vm.MarkReportSaved(Path.Combine(Path.GetTempPath(), "report.xlsx"));
         Assert.True(vm.HasSavedReport);
-
         vm.CurrentOptions[0].IsSelected = true;
         Assert.False(vm.HasSavedReport);
     }
@@ -227,6 +221,6 @@ public sealed class PresentationTests
         Assert.Equal(path, file.FileName);
         Assert.True(file.UseShellExecute);
         Assert.Equal(directory, folder.FileName);
-        Assert.True(folder.UseShellExecute);
+        Assert.True(file.UseShellExecute);
     }
 }
