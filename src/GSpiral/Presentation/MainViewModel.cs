@@ -224,6 +224,8 @@ public sealed class MainViewModel : ObservableObject
     public DateOnly CurrentReportDate => DateOnly.FromDateTime(DateTime.Now);
     public string IdentitySummaryText => $"{RespondentName} · {CompanyName} · {CurrentReportDate:dd.MM.yyyy}";
     public string TotalSelectionsText => $"Всего выбрано утверждений: {TotalSelections}";
+    public string ResultsPercentExplanation => "Процент выраженности показывает долю от максимально возможных 700 баллов для каждого типа.";
+    public string PieShareExplanation => "Круговая диаграмма показывает долю типа в сумме набранных баллов.";
 
     public bool Progress1 => CurrentQuestionIndex >= 0;
     public bool Progress2 => CurrentQuestionIndex >= 1;
@@ -249,7 +251,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     private SurveyRunState CreateNewRunState() =>
-        new(SurveyRandomizer.CreateOrders(seedProvider()));
+        SurveyRandomizer.CreateRun(seedProvider());
 
     private bool CanStart() =>
         !string.IsNullOrWhiteSpace(RespondentName) &&
@@ -335,7 +337,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void RebuildCurrentOptions()
     {
-        var byId = SurveyCatalog.OptionsForStage(CurrentQuestionIndex)
+        var byId = SurveyDisplayCatalog.OptionsForStage(CurrentQuestionIndex)
             .ToDictionary(option => option.Id, StringComparer.Ordinal);
         var order = SurveyRunState.RandomizedOrderByStage[CurrentQuestionIndex];
 
@@ -349,10 +351,10 @@ public sealed class MainViewModel : ObservableObject
                     option.Text,
                     decorative.Fill,
                     decorative.Border,
-                    SurveyRunState.IsSelected(option.Id),
+                    SurveyRunState.IsDisplaySelected(option),
                     selected =>
                     {
-                        SurveyRunState.SetSelected(option.Id, selected);
+                        SurveyRunState.SetDisplaySelected(option, selected);
                         ClearSavedReport();
                         NotifySelectionCount();
                     });
@@ -393,18 +395,21 @@ public sealed class MainViewModel : ObservableObject
                 result.Score / 700d))
             .ToArray();
 
-        TotalSelections = SurveyRunState.SelectedOptionIds.Count;
+        TotalSelections = SurveyCatalog.Stages.Sum(stage =>
+            SurveyDisplayCatalog.OptionsForStage(stage.Index)
+                .Count(SurveyRunState.IsDisplaySelected));
         HasSelections = Results.Sum(result => result.Score) > 0d;
         OnPropertyChanged(nameof(TotalSelectionsText));
 
         StageAnswerSummaries = SurveyCatalog.Stages
             .Select(stage =>
             {
-                var byId = SurveyCatalog.OptionsForStage(stage.Index)
+                var byId = SurveyDisplayCatalog.OptionsForStage(stage.Index)
                     .ToDictionary(option => option.Id, StringComparer.Ordinal);
                 var selectedTexts = SurveyRunState.RandomizedOrderByStage[stage.Index]
-                    .Where(SurveyRunState.IsSelected)
-                    .Select(id => byId[id].Text)
+                    .Select(id => byId[id])
+                    .Where(SurveyRunState.IsDisplaySelected)
+                    .Select(option => option.Text)
                     .ToArray();
                 return new StageAnswerSummaryViewModel(stage.Index, stage.Title, selectedTexts);
             })
