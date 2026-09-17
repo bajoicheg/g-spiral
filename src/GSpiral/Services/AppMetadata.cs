@@ -2,7 +2,7 @@ namespace GSpiral.Services;
 
 public static class AppMetadata
 {
-    public const string Version = "1.3.0";
+    public const string Version = "1.3.1";
     public const string ProductName = "G-Spiral";
     public const string CopyrightText = "© 2026 V. Vasilev";
     public const string RepositoryUrl = "https://github.com/bajoicheg/g-spiral";
