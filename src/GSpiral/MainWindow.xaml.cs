@@ -45,15 +45,21 @@ public partial class MainWindow : Window
                 vm.TrimmedRespondentName,
                 vm.TrimmedCompanyName,
                 DateTime.Now,
-                vm.SurveyState);
+                vm.SurveyRunState);
             vm.MarkReportSaved(dialog.FileName);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OpenXmlPackageException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OpenXmlPackageException or InvalidOperationException)
         {
             ShowActionError(
                 "Не удалось сохранить файл. Выберите другое место или закройте открытый файл и повторите попытку.",
                 ex);
         }
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new AboutWindow { Owner = this };
+        dialog.ShowDialog();
     }
 
     private void OpenSavedReport_Click(object sender, RoutedEventArgs e)
