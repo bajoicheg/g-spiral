@@ -65,12 +65,22 @@ jobs:
           files: artifacts/publish/G-Spiral.exe
 
   release-v1-1-0:
-    if: "${{ github.ref == 'refs/heads/feature/build-g-spiral-v1' && github.event.head_commit.message == 'chore: release v1.1.0' }}"
+    if: "${{ github.ref == 'refs/heads/feature/build-g-spiral-v1' && github.event.head_commit.message == 'chore: release v1.1.0 retry' }}"
     needs: build
     runs-on: windows-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create tag v1.1.0
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag v1.1.0 00521ac010d66e7fb1f6e1deea726b88541fd860
+          git push origin refs/tags/v1.1.0
       - uses: actions/download-artifact@v4
         with:
           name: G-Spiral-win-x64
@@ -79,7 +89,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.1.0
-          target_commitish: 00521ac010d66e7fb1f6e1deea726b88541fd860
           name: G-Spiral 1.1.0
           body: |
             Portable Windows x64 release of G-Spiral 1.1.0.
