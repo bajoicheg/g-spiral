@@ -67,7 +67,7 @@ public static class ResultCalculator
                 x.Type.Name,
                 x.Type.PrimaryHex,
                 x.Score,
-                x.Score / 42d,
+                x.Score / 7d,
                 total == 0d ? 0d : x.Score / total,
                 x.Type.Order))
             .OrderByDescending(x => x.Score)
