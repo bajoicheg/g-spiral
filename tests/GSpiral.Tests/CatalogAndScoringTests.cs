@@ -47,7 +47,7 @@ public sealed class CatalogAndScoringTests
     public void DisplayCatalog_DeduplicatesIdenticalTextWithinStageAndKeepsAllHiddenContributions()
     {
         var stage = SurveyCatalog.Stages.Single(stage => stage.Title == "Система управления");
-        var display = SurveyCatalog.DisplayOptionsForStage(stage.Index);
+        var display = SurveyDisplayCatalog.OptionsForStage(stage.Index);
         var regular = display.Single(option => option.Text == "Используется регулярный менеджмент");
 
         Assert.Equal(1, display.Count(option => option.Text == "Используется регулярный менеджмент"));
@@ -64,7 +64,7 @@ public sealed class CatalogAndScoringTests
     public void DisplaySelection_SelectsAllLinkedAtomsAndScoresEveryLinkedTypeIndependently()
     {
         var stage = SurveyCatalog.Stages.Single(stage => stage.Title == "Система управления");
-        var regular = SurveyCatalog.DisplayOptionsForStage(stage.Index)
+        var regular = SurveyDisplayCatalog.OptionsForStage(stage.Index)
             .Single(option => option.Text == "Используется регулярный менеджмент");
         var run = SurveyRandomizer.CreateRun(1234);
 
