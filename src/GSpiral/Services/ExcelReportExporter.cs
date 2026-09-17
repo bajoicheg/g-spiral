@@ -15,10 +15,8 @@ public static class ExcelReportExporter
     private const uint SubtitleStyle = 2;
     private const uint HeaderStyle = 3;
     private const uint BodyStyle = 4;
-    private const uint ChoiceSelectedStyle = 5;
-    private const uint ChoiceUnselectedStyle = 6;
-    private const uint FirstTypeStyle = 7;
-    private const uint PercentStyle = 19;
+    private const uint FirstTypeStyle = 5;
+    private const uint PercentStyle = 17;
     private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
 
     public static void Export(
@@ -32,7 +30,6 @@ public static class ExcelReportExporter
         ArgumentException.ThrowIfNullOrWhiteSpace(respondentName);
         ArgumentException.ThrowIfNullOrWhiteSpace(companyName);
         ArgumentNullException.ThrowIfNull(state);
-        ValidateRunOrder(state);
 
         using var document = SpreadsheetDocument.Create(path, SpreadsheetDocumentType.Workbook);
         var workbookPart = document.AddWorkbookPart();
@@ -41,10 +38,6 @@ public static class ExcelReportExporter
         var stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
         stylesPart.Stylesheet = BuildStyles();
         stylesPart.Stylesheet.Save();
-
-        var choicesPart = workbookPart.AddNewPart<WorksheetPart>();
-        choicesPart.Worksheet = BuildChoicesWorksheet(respondentName, companyName, generatedAt, state);
-        choicesPart.Worksheet.Save();
 
         var auditPart = workbookPart.AddNewPart<WorksheetPart>();
         auditPart.Worksheet = BuildAuditWorksheet(respondentName, companyName, generatedAt, state);
@@ -59,21 +52,17 @@ public static class ExcelReportExporter
         }
         resultsPart.Worksheet.Save();
 
+        var detailPart = workbookPart.AddNewPart<WorksheetPart>();
+        detailPart.Worksheet = BuildDetailWorksheet(respondentName, companyName, generatedAt, state);
+        detailPart.Worksheet.Save();
+
         var sheets = workbookPart.Workbook.AppendChild(new S.Sheets());
         sheets.Append(
-            Sheet(workbookPart, choicesPart, 1U, "Выборы"),
-            Sheet(workbookPart, auditPart, 2U, "Таблица ответов"),
-            Sheet(workbookPart, resultsPart, 3U, "Итоги"));
+            Sheet(workbookPart, auditPart, 1U, "Таблица ответов"),
+            Sheet(workbookPart, resultsPart, 2U, "Итоги"),
+            Sheet(workbookPart, detailPart, 3U, "Детализация ответов"));
 
         workbookPart.Workbook.Save();
-    }
-
-    private static void ValidateRunOrder(SurveyRunState state)
-    {
-        if (state.RandomizedOrderByStage.Count != SurveyCatalog.Stages.Count)
-        {
-            throw new InvalidOperationException("Survey run does not contain a randomized order for all stages.");
-        }
     }
 
     private static S.Sheet Sheet(WorkbookPart workbookPart, WorksheetPart part, uint id, string name) =>
@@ -84,75 +73,6 @@ public static class ExcelReportExporter
             Name = name
         };
 
-    private static S.Worksheet BuildChoicesWorksheet(
-        string respondentName,
-        string companyName,
-        DateTime generatedAt,
-        SurveyRunState state)
-    {
-        var data = new S.SheetData();
-        var worksheet = new S.Worksheet(
-            BuildSheetProperties(),
-            new S.SheetViews(new S.SheetView
-            {
-                WorkbookViewId = 0U,
-                ShowGridLines = false,
-                Pane = new S.Pane
-                {
-                    HorizontalSplit = 5D,
-                    TopLeftCell = "A6",
-                    ActivePane = S.PaneValues.BottomLeft,
-                    State = S.PaneStateValues.Frozen
-                }
-            }),
-            new S.Columns(
-                Column(1, 1, 6),
-                Column(2, 2, 88),
-                Column(3, 3, 17)),
-            data);
-
-        var merges = new S.MergeCells(
-            new S.MergeCell { Reference = "A1:C1" },
-            new S.MergeCell { Reference = "A2:C2" },
-            new S.MergeCell { Reference = "A3:C3" },
-            new S.MergeCell { Reference = "A4:C4" });
-
-        AppendMetadata(data, "Выборы пользователя", respondentName, companyName, generatedAt);
-        data.Append(Row(5, 18, TextCell("A5", "✓", ChoiceSelectedStyle), TextCell("B5", "выбранный вариант", SubtitleStyle)));
-
-        var rowIndex = 6;
-        foreach (var stage in SurveyCatalog.Stages)
-        {
-            var selectedCount = state.RandomizedOrderByStage[stage.Index].Count(state.IsSelected);
-            data.Append(Row(rowIndex, 27,
-                TextCell($"A{rowIndex}", $"{stage.Index + 1}", HeaderStyle),
-                TextCell($"B{rowIndex}", stage.Title, HeaderStyle),
-                TextCell($"C{rowIndex}", $"Выбрано: {selectedCount}", HeaderStyle)));
-            rowIndex++;
-
-            var lookup = SurveyCatalog.OptionsForStage(stage.Index)
-                .ToDictionary(option => option.Id, StringComparer.Ordinal);
-            foreach (var optionId in state.RandomizedOrderByStage[stage.Index])
-            {
-                var option = lookup[optionId];
-                var selected = state.IsSelected(option.Id);
-                data.Append(Row(rowIndex, 31,
-                    PlainStringCell($"A{rowIndex}", selected ? "✓" : ""),
-                    TextCell($"B{rowIndex}", option.Text, selected ? ChoiceSelectedStyle : ChoiceUnselectedStyle)));
-                rowIndex++;
-            }
-
-            rowIndex++;
-        }
-
-        worksheet.Append(
-            merges,
-            BuildPageMargins(),
-            new S.PageSetup { Orientation = S.OrientationValues.Portrait, PaperSize = 9U, FitToWidth = 1U, FitToHeight = 0U },
-            BuildFooter());
-        return worksheet;
-    }
-
     private static S.Worksheet BuildAuditWorksheet(
         string respondentName,
         string companyName,
@@ -162,29 +82,12 @@ public static class ExcelReportExporter
         var data = new S.SheetData();
         var worksheet = new S.Worksheet(
             BuildSheetProperties(),
-            new S.SheetViews(new S.SheetView
-            {
-                WorkbookViewId = 0U,
-                ShowGridLines = false,
-                Pane = new S.Pane
-                {
-                    HorizontalSplit = 6D,
-                    VerticalSplit = 1D,
-                    TopLeftCell = "B7",
-                    ActivePane = S.PaneValues.BottomRight,
-                    State = S.PaneStateValues.Frozen
-                }
-            }),
+            new S.SheetViews(BuildFrozenSheetView(6, 1, "B7")),
             BuildAuditColumns(),
             data);
 
-        var merges = new S.MergeCells(
-            new S.MergeCell { Reference = "A1:H1" },
-            new S.MergeCell { Reference = "A2:H2" },
-            new S.MergeCell { Reference = "A3:H3" },
-            new S.MergeCell { Reference = "A4:H4" });
-
-        AppendMetadata(data, "Таблица ответов — скрытая матрица 6 × 7", respondentName, companyName, generatedAt);
+        var merges = MetadataMerges("H");
+        AppendMetadata(data, "Таблица ответов — матрица 6 × 7", respondentName, companyName, generatedAt);
         data.Append(Row(5, 9));
 
         var header = new S.Row { RowIndex = 6U, Height = 48D, CustomHeight = true };
@@ -199,16 +102,17 @@ public static class ExcelReportExporter
         {
             var type = SurveyCatalog.Types[typeIndex];
             var rowIndex = 7 + typeIndex;
-            var row = new S.Row { RowIndex = (uint)rowIndex, Height = 150D, CustomHeight = true };
+            var row = new S.Row { RowIndex = (uint)rowIndex, Height = 154D, CustomHeight = true };
             row.Append(TextCell($"A{rowIndex}", type.Name, TypePrimaryStyle(type.Id)));
 
             for (var stageIndex = 0; stageIndex < SurveyCatalog.Stages.Count; stageIndex++)
             {
                 var cell = SurveyCatalog.GetCell(type.Id, stageIndex);
                 var score = ResultCalculator.CellScore(state, cell);
+                var rounded = Math.Round(score, 0, MidpointRounding.AwayFromZero);
                 var lines = new List<string>
                 {
-                    $"{score.ToString("0.0", RussianCulture)} / 100"
+                    $"{rounded.ToString("0", RussianCulture)} / 100"
                 };
                 lines.AddRange(cell.Options.Select(option => $"{(state.IsSelected(option.Id) ? "✓" : "○")} {option.Text}"));
                 row.Append(TextCell(
@@ -234,50 +138,57 @@ public static class ExcelReportExporter
         IReadOnlyList<SurveyScoreResult> results)
     {
         var data = new S.SheetData();
+        var columns = new S.Columns(
+            Column(1, 1, 8),
+            Column(2, 2, 24),
+            Column(3, 3, 14),
+            Column(4, 4, 12),
+            Column(5, 5, 22),
+            new S.Column { Min = 6U, Max = 6U, Width = 2D, CustomWidth = true, Hidden = true },
+            Column(7, 11, 13));
         var worksheet = new S.Worksheet(
             BuildSheetProperties(),
             new S.SheetViews(new S.SheetView { WorkbookViewId = 0U, ShowGridLines = false }),
-            new S.Columns(
-                Column(1, 1, 8),
-                Column(2, 2, 24),
-                Column(3, 3, 14),
-                Column(4, 4, 12),
-                Column(5, 5, 17),
-                Column(6, 11, 13)),
+            columns,
             data);
 
-        var merges = new S.MergeCells(
-            new S.MergeCell { Reference = "A1:K1" },
-            new S.MergeCell { Reference = "A2:K2" },
-            new S.MergeCell { Reference = "A3:K3" },
-            new S.MergeCell { Reference = "A4:K4" });
-
+        var merges = MetadataMerges("K");
         AppendMetadata(data, "Итоги корпоративной культуры", respondentName, companyName, generatedAt);
         data.Append(Row(5, 9));
-        data.Append(Row(6, 34,
+        data.Append(Row(6, 36,
             TextCell("A6", "Место", HeaderStyle),
             TextCell("B6", "Тип организации", HeaderStyle),
             TextCell("C6", "Баллы", HeaderStyle),
             TextCell("D6", "Максимум", HeaderStyle),
-            TextCell("E6", "Итоговый процент", HeaderStyle)));
+            TextCell("E6", "Выраженность", HeaderStyle),
+            TextCell("F6", "Точный балл", HeaderStyle)));
 
         var totalScore = results.Sum(result => result.Score);
         for (var i = 0; i < results.Count; i++)
         {
             var result = results[i];
             var rowIndex = 7 + i;
-            data.Append(Row(rowIndex, 32,
+            var roundedScore = Math.Round(result.Score, 0, MidpointRounding.AwayFromZero);
+            var row = Row(rowIndex, 32,
                 NumberCell($"A{rowIndex}", i + 1, BodyStyle),
                 TextCell($"B{rowIndex}", result.Name, TypePrimaryStyle(result.TypeId)),
-                NumberCell($"C{rowIndex}", result.Score, BodyStyle),
+                NumberCell($"C{rowIndex}", roundedScore, BodyStyle),
                 NumberCell($"D{rowIndex}", 700d, BodyStyle),
-                NumberCell($"E{rowIndex}", result.AbsolutePercent / 100d, PercentStyle)));
+                NumberCell($"E{rowIndex}", result.AbsolutePercent / 100d, PercentStyle),
+                NumberCell($"F{rowIndex}", result.Score, BodyStyle));
+            if (totalScore <= 0d && i == 0)
+            {
+                row.Append(TextCell("G7", "Нет выбранных соответствий", TitleStyle));
+            }
+            data.Append(row);
         }
 
+        merges.Append(new S.MergeCell { Reference = "A14:E14" });
+        data.Append(Row(14, 34,
+            TextCell("A14", "Выраженность = набранные баллы / 700. Диаграмма показывает долю типа в сумме набранных баллов.", SubtitleStyle)));
         if (totalScore <= 0d)
         {
             merges.Append(new S.MergeCell { Reference = "G7:K11" });
-            data.Append(Row(14, 40, TextCell("G14", "Нет выбранных соответствий", TitleStyle)));
         }
 
         worksheet.Append(
@@ -287,6 +198,119 @@ public static class ExcelReportExporter
             BuildFooter());
         return worksheet;
     }
+
+    private static S.Worksheet BuildDetailWorksheet(
+        string respondentName,
+        string companyName,
+        DateTime generatedAt,
+        SurveyRunState state)
+    {
+        var data = new S.SheetData();
+        var worksheet = new S.Worksheet(
+            BuildSheetProperties(),
+            new S.SheetViews(BuildFrozenSheetView(5, 0, "A6")),
+            new S.Columns(
+                Column(1, 1, 27),
+                Column(2, 2, 23),
+                Column(3, 3, 82),
+                Column(4, 4, 12)),
+            data);
+
+        var merges = MetadataMerges("D");
+        AppendMetadata(data, "Детализация ответов", respondentName, companyName, generatedAt);
+        data.Append(Row(5, 36,
+            TextCell("A5", "Этап", HeaderStyle),
+            TextCell("B5", "Тип", HeaderStyle),
+            TextCell("C5", "Утверждение", HeaderStyle),
+            TextCell("D5", "Ответ", HeaderStyle)));
+
+        var rowIndex = 6;
+        foreach (var stage in SurveyCatalog.Stages)
+        {
+            var stageRow = Row(rowIndex, 30,
+                TextCell($"A{rowIndex}", stage.Title, HeaderStyle),
+                TextCell($"B{rowIndex}", string.Empty, HeaderStyle),
+                TextCell($"C{rowIndex}", string.Empty, HeaderStyle),
+                TextCell($"D{rowIndex}", string.Empty, HeaderStyle));
+            stageRow.OutlineLevel = 0U;
+            stageRow.Hidden = false;
+            stageRow.Collapsed = false;
+            data.Append(stageRow);
+            rowIndex++;
+
+            foreach (var type in SurveyCatalog.Types)
+            {
+                var typeRow = Row(rowIndex, 27,
+                    TextCell($"A{rowIndex}", string.Empty, BodyStyle),
+                    TextCell($"B{rowIndex}", type.Name, TypePrimaryStyle(type.Id)),
+                    TextCell($"C{rowIndex}", string.Empty, TypeLightStyle(type.Id)),
+                    TextCell($"D{rowIndex}", string.Empty, TypeLightStyle(type.Id)));
+                typeRow.OutlineLevel = 1U;
+                typeRow.Hidden = false;
+                typeRow.Collapsed = false;
+                data.Append(typeRow);
+                rowIndex++;
+
+                var cell = SurveyCatalog.GetCell(type.Id, stage.Index);
+                foreach (var option in cell.Options)
+                {
+                    var selected = state.IsSelected(option.Id);
+                    var atomRow = Row(rowIndex, 25,
+                        TextCell($"A{rowIndex}", string.Empty, BodyStyle),
+                        TextCell($"B{rowIndex}", string.Empty, TypeLightStyle(type.Id)),
+                        TextCell($"C{rowIndex}", option.Text, TypeLightStyle(type.Id)),
+                        NumberCell($"D{rowIndex}", selected ? 1d : 0d, selected ? TypePrimaryStyle(type.Id) : BodyStyle));
+                    atomRow.OutlineLevel = 2U;
+                    atomRow.Hidden = false;
+                    atomRow.Collapsed = false;
+                    data.Append(atomRow);
+                    rowIndex++;
+                }
+            }
+        }
+
+        worksheet.Append(
+            merges,
+            BuildPageMargins(),
+            new S.PageSetup { Orientation = S.OrientationValues.Portrait, PaperSize = 9U, FitToWidth = 1U, FitToHeight = 0U },
+            BuildFooter());
+        return worksheet;
+    }
+
+    private static S.SheetView BuildFrozenSheetView(int frozenRows, int frozenColumns, string topLeftCell)
+    {
+        var activePane = frozenRows > 0 && frozenColumns > 0
+            ? S.PaneValues.BottomRight
+            : frozenRows > 0
+                ? S.PaneValues.BottomLeft
+                : S.PaneValues.TopRight;
+
+        var pane = new S.Pane
+        {
+            TopLeftCell = topLeftCell,
+            ActivePane = activePane,
+            State = S.PaneStateValues.Frozen
+        };
+        if (frozenColumns > 0) pane.HorizontalSplit = frozenColumns;
+        if (frozenRows > 0) pane.VerticalSplit = frozenRows;
+
+        var selection = new S.Selection
+        {
+            Pane = activePane,
+            ActiveCell = topLeftCell,
+            SequenceOfReferences = new ListValue<StringValue> { InnerText = topLeftCell }
+        };
+        var view = new S.SheetView { WorkbookViewId = 0U, ShowGridLines = false };
+        view.Append(pane, selection);
+        return view;
+    }
+
+    private static S.MergeCells MetadataMerges(string lastColumn) =>
+        new(
+            new S.MergeCell { Reference = $"A1:{lastColumn}1" },
+            new S.MergeCell { Reference = $"A2:{lastColumn}2" },
+            new S.MergeCell { Reference = $"A3:{lastColumn}3" },
+            new S.MergeCell { Reference = $"A4:{lastColumn}4" });
 
     private static void AppendMetadata(
         S.SheetData data,
@@ -321,7 +345,7 @@ public static class ExcelReportExporter
         var chartRelId = drawingsPart.GetIdOfPart(chartPart);
         var frame = new Xdr.GraphicFrame(
             new Xdr.NonVisualGraphicFrameProperties(
-                new Xdr.NonVisualDrawingProperties { Id = 2U, Name = "Структура выбранных соответствий" },
+                new Xdr.NonVisualDrawingProperties { Id = 2U, Name = "Структура набранных баллов" },
                 new Xdr.NonVisualGraphicFrameDrawingProperties()),
             new Xdr.Transform(
                 new A.Offset { X = 0L, Y = 0L },
@@ -369,9 +393,7 @@ public static class ExcelReportExporter
             categories.Append(new C.StringPoint(new C.NumericValue(results[i].Name)) { Index = (uint)i });
         }
         series.Append(new C.CategoryAxisData(
-            new C.StringReference(
-                new C.Formula("'Итоги'!$B$7:$B$12"),
-                categories)));
+            new C.StringReference(new C.Formula("'Итоги'!$B$7:$B$12"), categories)));
 
         var values = new C.NumberingCache(
             new C.FormatCode("General"),
@@ -382,20 +404,24 @@ public static class ExcelReportExporter
                 new C.NumericValue(results[i].Score.ToString(CultureInfo.InvariantCulture))) { Index = (uint)i });
         }
         series.Append(new C.Values(
-            new C.NumberReference(
-                new C.Formula("'Итоги'!$C$7:$C$12"),
-                values)));
+            new C.NumberReference(new C.Formula("'Итоги'!$F$7:$F$12"), values)));
 
         var pie = new C.Pie3DChart(
             new C.VaryColors { Val = true },
-            series);
+            series,
+            new C.DataLabels(
+                new C.ShowLegendKey { Val = false },
+                new C.ShowValue { Val = false },
+                new C.ShowCategoryName { Val = false },
+                new C.ShowPercent { Val = true },
+                new C.ShowLeaderLines { Val = true }));
 
         var title = new C.Title(
             new C.ChartText(
                 new C.RichText(
                     new A.BodyProperties(),
                     new A.ListStyle(),
-                    new A.Paragraph(new A.Run(new A.Text("Структура выбранных соответствий"))))),
+                    new A.Paragraph(new A.Run(new A.Text("Структура набранных баллов"))))),
             new C.Overlay { Val = false });
         var legend = new C.Legend(
             new C.LegendPosition { Val = C.LegendPositionValues.Right },
@@ -451,8 +477,6 @@ public static class ExcelReportExporter
         formats.Append(CellFormat(4, 0, 0, S.HorizontalAlignmentValues.Left, S.VerticalAlignmentValues.Center, true));
         formats.Append(CellFormat(3, 2, 1, S.HorizontalAlignmentValues.Center, S.VerticalAlignmentValues.Center, true));
         formats.Append(CellFormat(0, 0, 1, S.HorizontalAlignmentValues.Left, S.VerticalAlignmentValues.Top, true));
-        formats.Append(CellFormat(2, 3, 1, S.HorizontalAlignmentValues.Left, S.VerticalAlignmentValues.Center, true));
-        formats.Append(CellFormat(0, 4, 1, S.HorizontalAlignmentValues.Left, S.VerticalAlignmentValues.Center, true));
 
         for (var i = 0; i < SurveyCatalog.Types.Count; i++)
         {
@@ -472,7 +496,8 @@ public static class ExcelReportExporter
     }
 
     private static S.SheetProperties BuildSheetProperties() =>
-        new(new S.PageSetupProperties { FitToPage = true, AutoPageBreaks = false });
+        new(new S.OutlineProperties { SummaryBelow = true, ApplyStyles = true },
+            new S.PageSetupProperties { FitToPage = true, AutoPageBreaks = false });
 
     private static S.Columns BuildAuditColumns() =>
         new(
@@ -502,15 +527,6 @@ public static class ExcelReportExporter
             DataType = S.CellValues.InlineString,
             StyleIndex = styleIndex,
             InlineString = new S.InlineString(new S.Text(value) { Space = SpaceProcessingModeValues.Preserve })
-        };
-
-    private static S.Cell PlainStringCell(string reference, string value) =>
-        new()
-        {
-            CellReference = reference,
-            DataType = S.CellValues.String,
-            StyleIndex = BodyStyle,
-            CellValue = new S.CellValue(value)
         };
 
     private static S.Cell NumberCell(string reference, double value, uint styleIndex) =>
@@ -545,10 +561,7 @@ public static class ExcelReportExporter
             new S.Color { Rgb = rgb },
             new S.FontName { Val = "Aptos" },
             new S.FontFamilyNumbering { Val = 2 });
-        if (bold)
-        {
-            font.PrependChild(new S.Bold());
-        }
+        if (bold) font.PrependChild(new S.Bold());
         return font;
     }
 
