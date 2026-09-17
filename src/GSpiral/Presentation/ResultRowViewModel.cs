@@ -14,7 +14,11 @@ public sealed record ResultRowViewModel(
 {
     private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
 
-    public string ScoreText => $"{Score.ToString("0.#", RussianCulture)} / 700";
-    public string AbsolutePercentText => $"{AbsolutePercent.ToString("0.0", RussianCulture)}%";
+    public string ScoreText => $"{FormatRoundedScore(Score)} / 700";
+    public string AbsolutePercentText => $"{AbsolutePercent.ToString("0.0", RussianCulture)}% выраженности";
     public string ScoreAndPercentText => $"{ScoreText} · {AbsolutePercentText}";
+
+    public static string FormatRoundedScore(double score) =>
+        Math.Round(score, 0, MidpointRounding.AwayFromZero)
+            .ToString("0", RussianCulture);
 }
