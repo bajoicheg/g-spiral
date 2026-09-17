@@ -1,0 +1,1 @@
+G-Spiral application icon source is generated from the approved multicolor spiral artwork. The executable icon is embedded as Assets/G-Spiral.ico.
