@@ -150,6 +150,24 @@ jobs:
           chmod +x .agents/skills/continuous-development-cycle/scripts/{capability_router.py,continuation_queue.py,control_plane_audit.py,execution_continuity.py,execution_lease.py,fleet_supervisor.py,operation_intent.py,progress_slo.py,recovery.py,recovery_recipes.py,resume_capsule.py,run_checks.py,validate_checkpoint.py,validate_checkpoint_24.py,validate_evidence.py,version_convergence.py,watchdog_health.py}
           git add -A
           git add -f .agents/skills/continuous-development-cycle
+          git update-index --chmod=+x \
+            .agents/skills/continuous-development-cycle/scripts/capability_router.py \
+            .agents/skills/continuous-development-cycle/scripts/continuation_queue.py \
+            .agents/skills/continuous-development-cycle/scripts/control_plane_audit.py \
+            .agents/skills/continuous-development-cycle/scripts/execution_continuity.py \
+            .agents/skills/continuous-development-cycle/scripts/execution_lease.py \
+            .agents/skills/continuous-development-cycle/scripts/fleet_supervisor.py \
+            .agents/skills/continuous-development-cycle/scripts/operation_intent.py \
+            .agents/skills/continuous-development-cycle/scripts/progress_slo.py \
+            .agents/skills/continuous-development-cycle/scripts/recovery.py \
+            .agents/skills/continuous-development-cycle/scripts/recovery_recipes.py \
+            .agents/skills/continuous-development-cycle/scripts/resume_capsule.py \
+            .agents/skills/continuous-development-cycle/scripts/run_checks.py \
+            .agents/skills/continuous-development-cycle/scripts/validate_checkpoint.py \
+            .agents/skills/continuous-development-cycle/scripts/validate_checkpoint_24.py \
+            .agents/skills/continuous-development-cycle/scripts/validate_evidence.py \
+            .agents/skills/continuous-development-cycle/scripts/version_convergence.py \
+            .agents/skills/continuous-development-cycle/scripts/watchdog_health.py
           TREE="$(git write-tree)"
           ACTUAL="$(git rev-parse "${TREE}:.agents/skills/continuous-development-cycle")"
           echo "CDC_SUBTREE=${ACTUAL}"
