@@ -148,6 +148,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           chmod +x .agents/skills/continuous-development-cycle/scripts/{capability_router.py,continuation_queue.py,control_plane_audit.py,execution_continuity.py,execution_lease.py,fleet_supervisor.py,operation_intent.py,progress_slo.py,recovery.py,recovery_recipes.py,resume_capsule.py,run_checks.py,validate_checkpoint.py,validate_checkpoint_24.py,validate_evidence.py,version_convergence.py,watchdog_health.py}
+          find .agents/skills/continuous-development-cycle -type d -name __pycache__ -prune -exec rm -rf {} +
+          find .agents/skills/continuous-development-cycle -type f -name '*.pyc' -delete
           git add -A
           git add -f .agents/skills/continuous-development-cycle
           git update-index --chmod=+x \
