@@ -148,8 +148,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git add -f .agents/skills/continuous-development-cycle
           TREE="$(git write-tree)"
-          test "$(git rev-parse "${TREE}:.agents/skills/continuous-development-cycle")" = "${CDC_PACKAGE_TREE}"
+          ACTUAL="$(git rev-parse "${TREE}:.agents/skills/continuous-development-cycle")"
+          echo "CDC_SUBTREE=${ACTUAL}"
+          test "${ACTUAL}" = "${CDC_PACKAGE_TREE}"
           git commit -m "chore(cdc): adopt canonical CDC 2.8.2 [skip ci]"
           git push origin HEAD:cdc/adopt-2.8.2
           test -z "$(git status --porcelain)"
