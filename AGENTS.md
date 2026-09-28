@@ -1,3 +1,13 @@
+## CDC 2.11.1 authoritative provenance
+
+Use canonical `bajoicheg/g-cdc` **v2.11.1**, release `refs/heads/release/v2.11.1`, commit `a262f78b82cd9e8eba9bc3b6108e0b52a17c33b0`, exact package tree `6ffacd32cce74c3537150778d9b37cfeb361a621`. The immutable package is vendored at `.agents/skills/continuous-development-cycle/`; earlier version statements below are historical. Read the current vendored SKILL.md and validate the adapter and checkpoint before execution.
+
+The owner's scheduler pause remains in force. Do not enable, run, rebind or reschedule paused automations. Foreground work remains eligible under normal ownership, guard and budget controls. A paused scheduler, elapsed lease or terminal CI never proves that an owning invocation has stopped.
+
+For live target resolution use the authoritative `bajoicheg-private/g-supervisor` ref `refs/heads/cdc/fleet`, paths `fleet/registry.json` and `fleet/target.json`. Resolve both at one fresh revision and verify the canonical released identity. Read `references/live-target-resolution.md` and `references/watchdog-liveness-runtime.md`. Archived targets and prompt version strings cannot override that live authority. Existing product release, security, review and platform gates remain in force.
+
+Ownership now uses `refs/heads/cdc/coordination` and invocation-bound Git CAS; the earlier null single-writer assignment is historical. Never replace an existing owner.
+
 # g-spiral
 
 ## CDC 2.8.2 authoritative provenance
@@ -49,3 +59,4 @@ Human interaction is not an execution backend. Missing GitHub/connector/API meth
 Bare user continuation commands such as «продолжай», «продолжи» or “continue” mean continue the current authorized scope to terminal state. Do not stop after one status/read/commit/compute step. Terminal state is verified scope completion or a real durable blocker/handoff with exact evidence and next action. Explicit narrower user qualifiers and all normal guards still apply.
 
 Cost routing is visibility-aware. Public repositories may classify standard GitHub-hosted Actions as unmetered/normal compute; private/internal repositories retain Codex-first economics and expensive-Actions fallback controls.
+

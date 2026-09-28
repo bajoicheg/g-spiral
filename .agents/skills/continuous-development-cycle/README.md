@@ -1,4 +1,4 @@
-# Continuous Development Cycle v2.8.2
+# Continuous Development Cycle v2.11.1
 
 Installable ChatGPT/Codex/agent skill for recoverable, long-running software development.
 
@@ -152,3 +152,84 @@ Read `references/canonical-source-and-release.md`. Validate consumer pins with
 - Counterfactual recovery requires a new information-gaining strategy.
 - Public publication uses sanitized export into new history, not direct visibility switching of internal development history.
 - Dogfooding metrics measure CDC's own compliance without granting release authority.
+
+
+## v2.9.0 Deterministic Distribution & Convergence
+
+- Carrier-neutral package transport binds an independently trusted release version/commit/tree to path, Git mode and blob identity.
+- Directory verification proves transported bytes; Git-subtree verification proves the consumer's vendored package tree is exactly canonical.
+- The fleet convergence vector binds exact HEAD, package tree, consumer lock, semantic policy digest, checkpoint, lease, guard and adoption state.
+- CI evidence is classified before remediation so pre-run/setup failures cannot be mistaken for product RED.
+- Version equality alone can never produce integrated fleet state.
+
+Read references/deterministic-distribution-and-convergence.md.
+
+
+## v2.9.1 Transactional Migration & Provider Reconciliation
+
+- Fresh-HEAD section-aware migration replaces canonical policy sections instead of appending duplicate keys.
+- Schema-typed checkpoint builders validate v4 state before commit boundaries.
+- Migration transactions reserve tool operations, chunk Git objects through detached trees and keep product refs unchanged until exact convergence.
+- Terminal-provider reconciliation wakes the exact guarded operation while terminal provider state or TTL never grants takeover.
+
+
+## v2.9.2 Continuous Autonomy & Learning
+
+- Progress reports never terminate runnable work; execution continues until Terminal-State v2 permits a real boundary.
+- Every user command in every CDC-managed chat gets one freshly observed Moscow timestamp in exact format `[HH:MM DD.MM]`; timestamps are never extrapolated from previous messages.
+- Material RCA closes through one deduplicated, sanitized systemic fix disposition.
+- Every Fleet Watcher run returns exactly one evidence-based improvement proposal or reinforcement.
+- Dogfooding measures timestamp accuracy, premature-stop avoidance, feedback closure and improvement harvesting without granting authority.
+
+## v2.10.0 behavioral skill TDD and verification
+
+- Executable pressure-scenario suites retain a baseline RED and corrected GREEN trace for material CDC behavior controls.
+- Systematic RCA requires competing hypotheses and discriminating evidence before selecting root cause and feeding the bounded roadmap disposition.
+- Verification-before-terminal re-reads exact authoritative source/check/ownership/artifact state before COMPLETE, RELEASE_READY or INTEGRATED claims.
+- The new quality gates are evidence-only and never grant product-write, takeover, merge, release, scheduler or scope authority.
+
+Read `references/behavioral-tdd-and-verification.md`.
+
+## v2.10.1 specification compliance and two-stage review
+
+- Selective brainstorming is required only for genuine material ambiguity; clear authorized continuation does not gain a new approval loop.
+- Specification requirements map to plan tasks and durable continuation items with explicit expected/completion evidence.
+- Material changes require ordered independent spec-compliance then code-quality review.
+- Branch finishing checks exact candidate HEAD, fresh validation, diff/spec reconciliation, review closure and exact-SHA checks before CDC terminal handling.
+- Review/finishing gates are evidence-only and never grant merge or release authority.
+
+Read `references/specification-review-and-finishing.md`.
+
+## v2.10.2 worktree-isolated parallel development
+
+- Parallel task waves are dependency- and write-set-aware; overlapping writers serialize.
+- Delegated writers bind to isolated branches/worktrees and one exact base SHA; workers never write the shared integration branch.
+- A single integrator reconciles terminal worker evidence and shared-HEAD movement; force-push remains forbidden.
+- Observed benchmark evidence must show lower wall-clock time without conflict/rollback regression before safe parallelism is considered proven.
+- Parallel controls are evidence/planning gates only and never grant launch, product-write, merge, release or scope authority.
+
+Read `references/worktree-parallelism-and-integration.md`.
+
+## v2.11.0 managed executor pool
+
+- Parent-controlled, bounded executor pools provide Work-style delegation without transferring shared-branch, merge, release or scope authority.
+- Durable CAS is the launch boundary: eligible in-memory queue state never starts a worker until the exact reservation wins the shared production store.
+- Worker launch is capability-gated; unsupported runtimes execute the same plan through deterministic sequential fallback and never fabricate subagents.
+- Writers use exact-base isolated branches/worktrees with portable write claims; one integrator owns shared-branch integration.
+- Attempts/results are durable and preserve retry lineage; duplicate active launches fail closed.
+- Content-addressed result handoff preserves completed worker work when direct push is unavailable; the integrator publishes and revalidates it without blind rerun.
+- Independent work survives an unrelated worker failure.
+- Required runnable/running work and every unintegrated successful result keep the parent non-terminal.
+
+Read `references/managed-executor-pool.md`.
+
+
+### Managed-pool final safety boundary
+
+CDC 2.11.0 uses one authoritative coordination ref per pool and a one-shot durable launch CAS. Queue reservation alone cannot start a worker. Writer scope covers every path touched across the introduced history, required tasks cannot depend on omittable optional work, and remote publication is bound to a trusted immutable remote identity rather than a mutable remote name.
+
+The executable adapter in `scripts/managed_executor_runtime.py` provides a real Linux command backend, restart-safe attempt observations, descendant-aware cancellation and managed-parent terminal evaluation. See `references/managed-executor-runtime.md`; the backend is cooperative process supervision, not a security sandbox. `scripts/active_package.py` separately verifies actually installed runtime bytes against a pinned canonical package.
+
+## v2.11.1 liveness
+
+Fresh registry/release target resolution and durable all-project watchdog recovery distinguish premature completion from project terminal state. Owner pause is an explicit overriding gate; unknown effects are never replayed. Actual scheduler adapters remain capability- and authority-gated.

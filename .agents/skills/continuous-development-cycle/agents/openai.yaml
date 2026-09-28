@@ -1,6 +1,6 @@
 name: Continuous Development Cycle
-description: Project-independent durable development with stuck-state recovery, sanitized public export and CDC dogfooding.
-version: 2.8.2
+description: Durable CDC orchestration with behavioral verification, two-stage review and isolated parallel execution.
+version: 2.11.1
 policy:
   products:
   - chatgpt
@@ -10,7 +10,7 @@ policy:
   allow_implicit_invocation: true
 interface:
   display_name: Continuous Development Cycle
-  short_description: Fleet maturity, stuck-state recovery and sanitized public export
+  short_description: Verified review and safe parallel integration
   icon_small: assets/icon.svg
   icon_large: assets/icon.svg
-  default_prompt: Use $continuous-development-cycle to continue durable development through CDC 2.8.2 fleet/publication maturity and terminal-state controls.
+  default_prompt: Use $continuous-development-cycle to continue durable development through CDC 2.11.1 continuous execution, live target and owner-pause-aware watchdog controls.
