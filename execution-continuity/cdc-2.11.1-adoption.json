@@ -1,0 +1,35 @@
+{
+  "schema": "execution-continuity/v1",
+  "invocation_id": "work-20260928-cdc2111-g-spiral",
+  "current_state": "COMPLETE",
+  "requested_terminal_outcome": "scope_complete",
+  "runnable_next_action": false,
+  "meaningful_progress_refs": [
+    "https://github.com/bajoicheg/g-spiral/commit/1d528dc1d12d5cf0784399627c7250b73bce90e1"
+  ],
+  "primitive_steps": [],
+  "external_binding": null,
+  "blocker": null,
+  "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/1d528dc1d12d5cf0784399627c7250b73bce90e1/docs/work-status/current.md",
+  "next_action": null,
+  "lease_release_required": true,
+  "lease_released": true,
+  "terminal_state": {
+    "schema": "terminal-state/v2",
+    "invocation_id": "work-20260928-cdc2111-g-spiral",
+    "scope_id": "CDC 2.11.1 policy-only adoption for bajoicheg/g-spiral",
+    "observed_head": "1d528dc1d12d5cf0784399627c7250b73bce90e1",
+    "decision": "COMPLETE",
+    "runnable_actions": [],
+    "pending_external": null,
+    "blocker": null,
+    "meaningful_progress_refs": [
+      "https://github.com/bajoicheg/g-spiral/commit/1d528dc1d12d5cf0784399627c7250b73bce90e1"
+    ],
+    "completion_evidence_refs": [
+      "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/adoptions/cdc-2.11.1.json"
+    ],
+    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/1d528dc1d12d5cf0784399627c7250b73bce90e1/docs/work-status/current.md",
+    "lease_released": true
+  }
+}

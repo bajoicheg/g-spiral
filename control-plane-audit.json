@@ -1,0 +1,29 @@
+{
+  "schema": "control-plane-audit-log/v1",
+  "repository": "bajoicheg/g-spiral",
+  "source_ref": "refs/heads/main",
+  "entries": [
+    {
+      "sequence": 1,
+      "occurred_at_utc": "2026-09-28T11:57:50Z",
+      "actor_invocation_id": "work-20260928-cdc2111-g-spiral",
+      "event_type": "policy_adopt",
+      "object_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/adoptions/cdc-2.11.1.json",
+      "outcome": "CDC 2.11.1 exact adoption verified",
+      "details_digest": "sha256:05bfc3c2bb9f25ab8396b4bee17222098b836234a0f88fe643bc1866d4e0d15e",
+      "previous_hash": null,
+      "event_hash": "sha256:6c5a44a8da1174369d3c33f93f44b3fd74f43abf8e07fac64c38388a7450db1c"
+    },
+    {
+      "sequence": 2,
+      "occurred_at_utc": "2026-09-28T11:57:50Z",
+      "actor_invocation_id": "work-20260928-cdc2111-g-spiral",
+      "event_type": "lease_release",
+      "object_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/adoptions/cdc-2.11.1.json",
+      "outcome": "CDC adoption scope complete",
+      "details_digest": "sha256:05bfc3c2bb9f25ab8396b4bee17222098b836234a0f88fe643bc1866d4e0d15e",
+      "previous_hash": "sha256:6c5a44a8da1174369d3c33f93f44b3fd74f43abf8e07fac64c38388a7450db1c",
+      "event_hash": "sha256:d1749408335b954bfa4914b99763d982accb85a251a53f998524ba0e8d4a2497"
+    }
+  ]
+}
