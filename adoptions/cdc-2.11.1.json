@@ -1,0 +1,42 @@
+{
+  "schema": "cdc-consumer-adoption-evidence/v1",
+  "repository": "bajoicheg/g-spiral",
+  "source_ref": "refs/heads/main",
+  "source_head": "1d528dc1d12d5cf0784399627c7250b73bce90e1",
+  "source_base": "d52b9fff3fabcdd4d4fac3a38951cbf36152b27d",
+  "release": {
+    "schema": "live-target-release/v1",
+    "version": "2.11.1",
+    "canonical_repository": "bajoicheg/g-cdc",
+    "release_ref": "refs/heads/release/v2.11.1",
+    "release_commit": "a262f78b82cd9e8eba9bc3b6108e0b52a17c33b0",
+    "package_tree": "6ffacd32cce74c3537150778d9b37cfeb361a621"
+  },
+  "package_tree": "6ffacd32cce74c3537150778d9b37cfeb361a621",
+  "policy_digest": "37fbf5ab8334566263eff223afc276bd3863d2c467323633dfb024cc4d8c613f",
+  "checkpoint_schema": "development-work-status/v4",
+  "status": "applied_verified",
+  "observed_at_utc": "2026-09-28T11:57:50Z",
+  "safe_boundary": {
+    "prior_generation": 0,
+    "prior_explicitly_released": false,
+    "initial_unowned_coordination": true,
+    "adopting_generation": 1,
+    "invocation_id": "work-20260928-cdc2111-g-spiral",
+    "guard": null
+  },
+  "checks": {
+    "exact_package_subtree": "PASS",
+    "strict_adapter": "PASS",
+    "checkpoint_v4": "PASS",
+    "policy_migration_idempotency": "PASS",
+    "changed_path_containment": "PASS",
+    "product_source_changes": 0
+  },
+  "new_product_ci_runs": [],
+  "product_platform_validation": "not rerun; existing evidence remains bound to its original SHA",
+  "fleet_authority_revision": "7e7f953446c2e6a0134716f0d1960e88604677d9",
+  "scheduler_mutations": 0,
+  "budget_history_preserved": true,
+  "next_action": "No remaining work in this project adoption scope. Read live ownership and separately authorized product task before new product work."
+}

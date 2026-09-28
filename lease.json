@@ -21,12 +21,12 @@
     "started_at_utc": "2026-09-28T11:51:19Z"
   },
   "finalization": {
-    "state": "active",
+    "state": "draining",
     "pending_shared_writes": false,
     "checkpoint_ref": null,
     "external_reconciliation": "pending",
     "completion_reason": null,
-    "updated_at_utc": "2026-09-28T11:51:19Z",
+    "updated_at_utc": "2026-09-28T11:57:50Z",
     "failure": null
   },
   "legacy_migration": null
