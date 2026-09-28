@@ -1,0 +1,7 @@
+{
+  "source_head": "d52b9fff3fabcdd4d4fac3a38951cbf36152b27d",
+  "authorization": "Owner requested CDC update on all projects; existing checkpoint explicitly released, no coordination ref, no active PR or guarded operation found. Initialize Git CAS ownership for the policy-only adoption.",
+  "scope": "CDC dependency/policy adoption only",
+  "scheduler_mutations": 0,
+  "external_starts": 0
+}

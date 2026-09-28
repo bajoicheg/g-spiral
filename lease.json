@@ -1,0 +1,33 @@
+{
+  "schema": "execution-lease/v2",
+  "repository": "bajoicheg/g-spiral",
+  "source_ref": "refs/heads/main",
+  "generation": 1,
+  "owner_id": "56113987-cd76-4af6-a7a1-000f389b3154",
+  "acquired_at_utc": "2026-09-28T11:51:19Z",
+  "heartbeat_at_utc": "2026-09-28T11:51:19Z",
+  "expires_at_utc": "2026-09-28T12:11:19Z",
+  "activity_refs": [],
+  "external_guard": null,
+  "last_release": null,
+  "takeover_evidence": null,
+  "last_terminal": null,
+  "submission_claims": [],
+  "invocation": {
+    "invocation_id": "work-20260928-cdc2111-g-spiral",
+    "automation_id": null,
+    "conversation_id": null,
+    "execution_surface": "work",
+    "started_at_utc": "2026-09-28T11:51:19Z"
+  },
+  "finalization": {
+    "state": "active",
+    "pending_shared_writes": false,
+    "checkpoint_ref": null,
+    "external_reconciliation": "pending",
+    "completion_reason": null,
+    "updated_at_utc": "2026-09-28T11:51:19Z",
+    "failure": null
+  },
+  "legacy_migration": null
+}
