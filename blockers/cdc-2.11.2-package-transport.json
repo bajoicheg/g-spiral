@@ -1,0 +1,16 @@
+{
+  "schema": "blocked-state-proof/v1",
+  "dependency_id": "g-spiral-cdc-2.11.2-package-transport",
+  "category": "execution_channel",
+  "observed_at_utc": "2026-09-30T20:10:00Z",
+  "max_age_seconds": 86400,
+  "evidence_refs": [
+    "git:db1517d03a1ec83da098c23c67d0fd2bae1f9fe7:restored-exact-2.11.1-tree",
+    "git-tree:6ffacd32cce74c3537150778d9b37cfeb361a621",
+    "cdc-release:48e637b230e7640d0dcd13da60d712f38f59a2b6",
+    "platform-write-guard:SKILL.md-direct-and-blob-transfer-rejected"
+  ],
+  "next_action": "Retry CDC 2.11.2 package adoption only through an authorized transport that can replace the canonical SKILL.md and remaining delta atomically or verifiably; require exact package tree 7a7a7faa75b7fc9160d912d8fb507c6b9573d17f before updating consumer lock/policy.",
+  "recheck_trigger": "A package transport/write route becomes available that can write the exact canonical CDC 2.11.2 bytes without bypassing repository or platform guards.",
+  "same_invocation_work_exhausted": true
+}
