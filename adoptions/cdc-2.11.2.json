@@ -1,0 +1,53 @@
+{
+  "schema": "cdc-consumer-adoption-evidence/v1",
+  "repository": "bajoicheg/g-spiral",
+  "source_ref": "refs/heads/main",
+  "source_head": "679c4246a31f1912feff16c5a3eba912856ee0eb",
+  "source_base": "db1517d03a1ec83da098c23c67d0fd2bae1f9fe7",
+  "release": {
+    "schema": "live-target-release/v1",
+    "version": "2.11.2",
+    "canonical_repository": "bajoicheg/g-cdc",
+    "release_ref": "refs/heads/release/v2.11.2",
+    "release_commit": "48e637b230e7640d0dcd13da60d712f38f59a2b6",
+    "package_tree": "7a7a7faa75b7fc9160d912d8fb507c6b9573d17f"
+  },
+  "package_tree": "7a7a7faa75b7fc9160d912d8fb507c6b9573d17f",
+  "policy_digest": "118c57ea352e32b5666b763956eb3deaae20be9abe9606ae45ed5c4c2fc20f11",
+  "checkpoint_schema": "development-work-status/v4",
+  "status": "applied_verified",
+  "observed_at_utc": "2026-09-30T20:47:02Z",
+  "safe_boundary": {
+    "prior_generation": 3,
+    "prior_explicitly_released": true,
+    "prior_guard": null,
+    "adopting_generation": 4,
+    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r3"
+  },
+  "checks": {
+    "exact_package_subtree": "PASS",
+    "package_validator": "PASS: 316 files/templates",
+    "full_vendored_suite": "866/866 PASS",
+    "strict_adapter": "PASS",
+    "checkpoint_v4": "PASS",
+    "consumer_lock": "PASS",
+    "changed_path_containment": "PASS: .agents CDC evidence, AGENTS.md and docs only",
+    "product_source_changes": 0
+  },
+  "validation": {
+    "run_id": 36774463901,
+    "validation_head": "8ee98131b2bf2d77cb88cb0fbccf254970545372",
+    "result": "GREEN",
+    "note": "Validation-only branch adds only the workflow; checked source bytes are from main commit 679c4246a31f1912feff16c5a3eba912856ee0eb."
+  },
+  "fixture_portability": {
+    "canonical_fixture_blob": "907e50ecccf5bb56ff206394351966b502947eea",
+    "consumer_path": ".agents/fault-injection/scenarios.json",
+    "package_tree_unchanged": true,
+    "note": "Fixture lives outside the immutable package so retained vendored regressions can resolve canonical repo-root data."
+  },
+  "fleet_authority_revision": "102711ccda26ae5277c615eb22f56103f361c482",
+  "scheduler_mutations": 0,
+  "budget_history_preserved": true,
+  "next_action": "No remaining work in this project adoption scope. Fleet convergence is finalized separately after other active owners finish."
+}

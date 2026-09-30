@@ -3,42 +3,29 @@
   "repository": "bajoicheg/g-spiral",
   "source_ref": "refs/heads/main",
   "generation": 4,
-  "owner_id": "5c3f2a10-7e91-4a8b-9c22-cdc211200005",
-  "acquired_at_utc": "2026-09-30T20:28:00Z",
-  "heartbeat_at_utc": "2026-09-30T20:44:54Z",
-  "expires_at_utc": "2026-09-30T21:04:54Z",
+  "owner_id": null,
+  "acquired_at_utc": null,
+  "heartbeat_at_utc": null,
+  "expires_at_utc": null,
   "activity_refs": [
-    "transport-probe:canonical-git-blob-base64:6379e80f7e1819550e58b4763113b7b4d12620ed",
+    "transport-recovery:canonical-git-blob-base64",
+    "git:679c4246a31f1912feff16c5a3eba912856ee0eb:exact-2.11.2-adoption",
     "actions:36774463901:success"
   ],
   "external_guard": null,
   "last_release": {
-    "owner_id": "1bb44f4e-6f57-4cd4-88d2-cdc211200004",
-    "generation": 3,
-    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r2",
-    "at_utc": "2026-09-30T20:19:13Z",
-    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/continuity/cdc-2.11.2-transport-r2.json",
+    "owner_id": "5c3f2a10-7e91-4a8b-9c22-cdc211200005",
+    "generation": 4,
+    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r3",
+    "at_utc": "2026-09-30T20:47:02Z",
+    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/679c4246a31f1912feff16c5a3eba912856ee0eb/docs/work-status/current.md",
     "external_reconciliation": "none",
-    "completion_reason": "resumable_blocker"
+    "completion_reason": "scope_complete"
   },
   "takeover_evidence": null,
   "last_terminal": null,
   "submission_claims": [],
-  "invocation": {
-    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r3",
-    "automation_id": null,
-    "conversation_id": null,
-    "execution_surface": "chat",
-    "started_at_utc": "2026-09-30T20:28:00Z"
-  },
-  "finalization": {
-    "state": "active",
-    "pending_shared_writes": false,
-    "checkpoint_ref": null,
-    "external_reconciliation": "pending",
-    "completion_reason": null,
-    "updated_at_utc": "2026-09-30T20:44:54Z",
-    "failure": null
-  },
+  "invocation": null,
+  "finalization": null,
   "legacy_migration": null
 }
