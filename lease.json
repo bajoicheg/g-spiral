@@ -3,41 +3,28 @@
   "repository": "bajoicheg/g-spiral",
   "source_ref": "refs/heads/main",
   "generation": 2,
-  "owner_id": "4a9f93d2-61c7-4c7d-8d2a-cdc211200003",
-  "acquired_at_utc": "2026-09-30T20:07:34Z",
-  "heartbeat_at_utc": "2026-09-30T20:07:34Z",
-  "expires_at_utc": "2026-09-30T20:27:34Z",
+  "owner_id": null,
+  "acquired_at_utc": null,
+  "heartbeat_at_utc": null,
+  "expires_at_utc": null,
   "activity_refs": [
-    "canonical-package-blobs:7a7a7faa75b7fc9160d912d8fb507c6b9573d17f"
+    "git:db1517d03a1ec83da098c23c67d0fd2bae1f9fe7:restored-exact-2.11.1-tree",
+    "blocker:cdc-2.11.2-package-transport"
   ],
   "external_guard": null,
   "last_release": {
-    "owner_id": "56113987-cd76-4af6-a7a1-000f389b3154",
-    "generation": 1,
-    "invocation_id": "work-20260928-cdc2111-g-spiral",
-    "at_utc": "2026-09-28T11:57:50Z",
-    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/1d528dc1d12d5cf0784399627c7250b73bce90e1/docs/work-status/current.md",
+    "owner_id": "4a9f93d2-61c7-4c7d-8d2a-cdc211200003",
+    "generation": 2,
+    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral",
+    "at_utc": "2026-09-30T20:13:44Z",
+    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/blockers/cdc-2.11.2-package-transport.json",
     "external_reconciliation": "none",
-    "completion_reason": "scope_complete"
+    "completion_reason": "resumable_blocker"
   },
   "takeover_evidence": null,
   "last_terminal": null,
   "submission_claims": [],
-  "invocation": {
-    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral",
-    "automation_id": null,
-    "conversation_id": null,
-    "execution_surface": "chat",
-    "started_at_utc": "2026-09-30T20:07:34Z"
-  },
-  "finalization": {
-    "state": "active",
-    "pending_shared_writes": false,
-    "checkpoint_ref": null,
-    "external_reconciliation": "pending",
-    "completion_reason": null,
-    "updated_at_utc": "2026-09-30T20:07:34Z",
-    "failure": null
-  },
+  "invocation": null,
+  "finalization": null,
   "legacy_migration": null
 }
