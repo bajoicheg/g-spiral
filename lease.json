@@ -5,10 +5,11 @@
   "generation": 4,
   "owner_id": "5c3f2a10-7e91-4a8b-9c22-cdc211200005",
   "acquired_at_utc": "2026-09-30T20:28:00Z",
-  "heartbeat_at_utc": "2026-09-30T20:28:00Z",
-  "expires_at_utc": "2026-09-30T20:48:00Z",
+  "heartbeat_at_utc": "2026-09-30T20:44:54Z",
+  "expires_at_utc": "2026-09-30T21:04:54Z",
   "activity_refs": [
-    "transport-probe:canonical-git-blob-base64:6379e80f7e1819550e58b4763113b7b4d12620ed"
+    "transport-probe:canonical-git-blob-base64:6379e80f7e1819550e58b4763113b7b4d12620ed",
+    "actions:36774463901:success"
   ],
   "external_guard": null,
   "last_release": {
@@ -36,7 +37,7 @@
     "checkpoint_ref": null,
     "external_reconciliation": "pending",
     "completion_reason": null,
-    "updated_at_utc": "2026-09-30T20:28:00Z",
+    "updated_at_utc": "2026-09-30T20:44:54Z",
     "failure": null
   },
   "legacy_migration": null
