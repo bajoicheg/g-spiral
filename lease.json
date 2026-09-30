@@ -3,41 +3,28 @@
   "repository": "bajoicheg/g-spiral",
   "source_ref": "refs/heads/main",
   "generation": 3,
-  "owner_id": "1bb44f4e-6f57-4cd4-88d2-cdc211200004",
-  "acquired_at_utc": "2026-09-30T20:17:34Z",
-  "heartbeat_at_utc": "2026-09-30T20:17:34Z",
-  "expires_at_utc": "2026-09-30T20:37:34Z",
+  "owner_id": null,
+  "acquired_at_utc": null,
+  "heartbeat_at_utc": null,
+  "expires_at_utc": null,
   "activity_refs": [
-    "transport-probe:canonical-git-blob-base64"
+    "transport-probe:canonical-git-blob-base64:unavailable",
+    "git:db1517d03a1ec83da098c23c67d0fd2bae1f9fe7:exact-2.11.1-restored"
   ],
   "external_guard": null,
   "last_release": {
-    "owner_id": "4a9f93d2-61c7-4c7d-8d2a-cdc211200003",
-    "generation": 2,
-    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral",
-    "at_utc": "2026-09-30T20:13:44Z",
-    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/blockers/cdc-2.11.2-package-transport.json",
+    "owner_id": "1bb44f4e-6f57-4cd4-88d2-cdc211200004",
+    "generation": 3,
+    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r2",
+    "at_utc": "2026-09-30T20:19:13Z",
+    "checkpoint_ref": "https://github.com/bajoicheg/g-spiral/blob/cdc/coordination/continuity/cdc-2.11.2-transport-r2.json",
     "external_reconciliation": "none",
     "completion_reason": "resumable_blocker"
   },
   "takeover_evidence": null,
   "last_terminal": null,
   "submission_claims": [],
-  "invocation": {
-    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r2",
-    "automation_id": null,
-    "conversation_id": null,
-    "execution_surface": "chat",
-    "started_at_utc": "2026-09-30T20:17:34Z"
-  },
-  "finalization": {
-    "state": "active",
-    "pending_shared_writes": false,
-    "checkpoint_ref": null,
-    "external_reconciliation": "pending",
-    "completion_reason": null,
-    "updated_at_utc": "2026-09-30T20:17:34Z",
-    "failure": null
-  },
+  "invocation": null,
+  "finalization": null,
   "legacy_migration": null
 }
