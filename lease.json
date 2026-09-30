@@ -2,14 +2,13 @@
   "schema": "execution-lease/v2",
   "repository": "bajoicheg/g-spiral",
   "source_ref": "refs/heads/main",
-  "generation": 2,
-  "owner_id": null,
-  "acquired_at_utc": null,
-  "heartbeat_at_utc": null,
-  "expires_at_utc": null,
+  "generation": 3,
+  "owner_id": "1bb44f4e-6f57-4cd4-88d2-cdc211200004",
+  "acquired_at_utc": "2026-09-30T20:17:34Z",
+  "heartbeat_at_utc": "2026-09-30T20:17:34Z",
+  "expires_at_utc": "2026-09-30T20:37:34Z",
   "activity_refs": [
-    "git:db1517d03a1ec83da098c23c67d0fd2bae1f9fe7:restored-exact-2.11.1-tree",
-    "blocker:cdc-2.11.2-package-transport"
+    "transport-probe:canonical-git-blob-base64"
   ],
   "external_guard": null,
   "last_release": {
@@ -24,7 +23,21 @@
   "takeover_evidence": null,
   "last_terminal": null,
   "submission_claims": [],
-  "invocation": null,
-  "finalization": null,
+  "invocation": {
+    "invocation_id": "chat-20260930-cdc2112-adoption-g-spiral-r2",
+    "automation_id": null,
+    "conversation_id": null,
+    "execution_surface": "chat",
+    "started_at_utc": "2026-09-30T20:17:34Z"
+  },
+  "finalization": {
+    "state": "active",
+    "pending_shared_writes": false,
+    "checkpoint_ref": null,
+    "external_reconciliation": "pending",
+    "completion_reason": null,
+    "updated_at_utc": "2026-09-30T20:17:34Z",
+    "failure": null
+  },
   "legacy_migration": null
 }
