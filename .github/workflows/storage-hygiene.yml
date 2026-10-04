@@ -30,8 +30,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
-          PRESERVE_RUN_IDS: ''
-          ARTIFACT_RULES: '[]'
+          PRESERVE_RUN_IDS: '35237542131'
+          ARTIFACT_RULES: '[["G-Spiral-win-x64",14,"ci-package"],["test-results",7,"dev-test-evidence"]]'
         shell: bash
         run: |
           set -euo pipefail
