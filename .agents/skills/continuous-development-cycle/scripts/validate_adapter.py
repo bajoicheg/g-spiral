@@ -259,14 +259,24 @@ def validate_adapter(data, skill_version=None):
         raise ContractError("legacy adapter: migrate explicitly using references/policy-compatibility.md; "
                             "preserve restrictions and in-flight operations")
     schema = dict(SCHEMA)
+    if isinstance(data, dict) and "quality" in data:
+        schema["quality"] = dict
     if isinstance(data, dict) and "orchestration" in data:
         schema["orchestration"] = dict
     for name in ("routing", "recovery_recipes", "continuation", "fleet", "convergence", "progress_slo", "audit", "autonomy", "publication", "hardening", "maturity"):
         if isinstance(data, dict) and name in data:
             schema[name] = dict
     check(data, schema)
+    if "quality" in data:
+        from quality_levels import validate_policy
+        try:
+            validate_policy(data["quality"])
+        except ValueError as exc:
+            raise ContractError(f"quality policy: {exc}") from exc
     policy = data["policy"]
     version = semver(skill_version or (ROOT / "VERSION").read_text().strip())
+    if version < (2, 11, 3):
+        raise ContractError("minimum supported CDC runtime is 2.11.3")
     lower, upper = semver(policy["skill_min_version"]), semver(policy["skill_max_version_exclusive"])
     if not lower <= version < upper:
         raise ContractError("policy skill version range is incompatible with installed skill")

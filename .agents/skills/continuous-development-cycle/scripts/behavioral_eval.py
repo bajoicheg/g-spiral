@@ -13,7 +13,12 @@ SCENARIOS={
     "duplicate_command_timestamp",
     "stale_checkpoint_vs_live_lease",
     "unchanged_recovery_retry",
+    "orphan_owned_final_response",
+    "dual_fleet_supervisor",
+    "partial_consumer_adoption",
+    "successor_release_receipt",
 }
+QUALITY_SCENARIOS={'unchanged_validation_repeat','critical_quality_downgrade','validation_budget_overrun'}
 
 def _text(v,n):
     if not isinstance(v,str) or not v.strip():
@@ -38,7 +43,7 @@ def validate_case(case):
     if not isinstance(case,dict) or set(case)!=fields or case.get("schema")!=CASE_SCHEMA:
         raise ValueError("behavioral case fields/schema mismatch")
     _text(case["scenario_id"],"scenario_id")
-    if case["scenario_type"] not in SCENARIOS:
+    if case["scenario_type"] not in SCENARIOS|QUALITY_SCENARIOS:
         raise ValueError("unsupported behavioral scenario")
     _trace(case["baseline_trace"],"baseline_trace");_trace(case["corrected_trace"],"corrected_trace")
     kind=case["scenario_type"]
@@ -60,6 +65,29 @@ def validate_case(case):
             raise ValueError("ownership pressure requires stale released checkpoint and active coordination")
     elif kind=="unchanged_recovery_retry":
         _facts(case,{"failed_strategy":str})
+    elif kind=="orphan_owned_final_response":
+        f=_facts(case,{"lease_owned":bool,"runtime_state":str,"pending_effects":bool})
+        if not f["lease_owned"] or f["runtime_state"]!="stopped" or f["pending_effects"]:
+            raise ValueError("orphan pressure facts invalid")
+    elif kind=="dual_fleet_supervisor":
+        f=_facts(case,{"same_initial_revision":bool})
+        if not f["same_initial_revision"]:
+            raise ValueError("dual supervisor pressure requires same initial revision")
+    elif kind=="partial_consumer_adoption":
+        _facts(case,{"target_version":str})
+    elif kind=="successor_release_receipt":
+        f=_facts(case,{"first_generation":int,"successor_generation":int})
+        if f["successor_generation"]<=f["first_generation"]:
+            raise ValueError("successor release pressure generations invalid")
+    elif kind=='unchanged_validation_repeat':
+        f=_facts(case,{'inputs_unchanged':bool})
+        if not f['inputs_unchanged']:raise ValueError('unchanged-input pressure required')
+    elif kind=='critical_quality_downgrade':
+        f=_facts(case,{'risk_category':str})
+        if f['risk_category']!='ad_write':raise ValueError('critical AD pressure required')
+    elif kind=='validation_budget_overrun':
+        f=_facts(case,{'cycle_number':int,'max_validation_cycles':int})
+        if not f['cycle_number']>f['max_validation_cycles']>=1:raise ValueError('cycle overrun pressure required')
     return case
 
 def _before(trace,a,b):
@@ -68,6 +96,16 @@ def _before(trace,a,b):
 def judge(case,trace):
     validate_case(case)
     kind=case["scenario_type"];facts=case["facts"]
+    if kind=='unchanged_validation_repeat':
+        ok=_before(trace,'verify_coverage','reuse_evidence') and 'repeat_validation' not in trace
+        return ok,'reuse_without_repeat' if ok else 'unchanged_validation_repeated'
+    if kind=='critical_quality_downgrade':
+        events=('assess_risk:FULL','review:spec','review:quality','verify_required_checks')
+        ok=all(e in trace for e in events) and all(_before(trace,a,b) for a,b in zip(events,events[1:])) and 'quality:FAST' not in trace
+        return ok,'critical_full_verified' if ok else 'critical_risk_downgraded'
+    if kind=='validation_budget_overrun':
+        ok='replan_strategy' in trace and 'repeat_validation' not in trace
+        return ok,'strategy_replanned' if ok else 'unjustified_additional_cycle'
     if kind=="premature_milestone_stop":
         if not facts["runnable_work"]:
             return True,"no_runnable_pressure"
@@ -103,6 +141,36 @@ def judge(case,trace):
         ok=(f"failure:{failed}" in trace and same not in trace and
             ("block:needs_new_strategy" in trace or bool(new)))
         return ok,"strategy_changed_or_bounded_block" if ok else "unchanged_failed_strategy_retried"
+    if kind=="orphan_owned_final_response":
+        ok=("runtime:stopped" in trace and "classify:orphaned_recoverable" in trace
+            and "gate:block_owned" in trace and "release" in trace and "release_receipt" in trace
+            and "final_response" in trace and _before(trace,"release","release_receipt")
+            and _before(trace,"release_receipt","final_response") and "status:active" not in trace)
+        return ok,"orphan_released_before_final_response" if ok else "ghost_owner_or_premature_final_response"
+    if kind=="dual_fleet_supervisor":
+        effects=[x for x in trace if x.startswith("provider_effect:")]
+        ok=("cas:a:leader" in trace and "cas:b:stale" in trace and len(effects)==1
+            and _before(trace,"cas:a:leader",effects[0]))
+        return ok,"single_cas_leader_single_effect" if ok else "dual_leader_or_duplicate_effect"
+    if kind=="partial_consumer_adoption":
+        ordered=all(x in trace for x in ("prepare:detached","verify:package_tree","claim:conditional_publish",
+                                        "conditional_fast_forward","readback:package_tree"))
+        if ordered:
+            ordered=(_before(trace,"prepare:detached","verify:package_tree")
+                     and _before(trace,"verify:package_tree","claim:conditional_publish")
+                     and _before(trace,"claim:conditional_publish","conditional_fast_forward")
+                     and _before(trace,"conditional_fast_forward","readback:package_tree"))
+        ok=ordered and "shared_ref:partial_target" not in trace
+        return ok,"single_atomic_publish_after_exact_tree" if ok else "partial_target_exposed_or_publish_unverified"
+    if kind=="successor_release_receipt":
+        ordered=all(x in trace for x in ("release:g1","capture_receipt:g1","release:g2","verify_receipt:g1","final_response:g1"))
+        if ordered:
+            ordered=(_before(trace,"release:g1","capture_receipt:g1")
+                     and _before(trace,"capture_receipt:g1","release:g2")
+                     and _before(trace,"release:g2","verify_receipt:g1")
+                     and _before(trace,"verify_receipt:g1","final_response:g1"))
+        ok=ordered and "final_response:g1:blocked" not in trace
+        return ok,"immutable_prior_release_receipt_survives_successor" if ok else "mutable_last_release_erased_prior_proof"
     raise AssertionError(kind)
 
 def evaluate_case(case):

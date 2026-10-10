@@ -2,14 +2,14 @@
 schema: development-work-status/v4
 repository: bajoicheg/g-spiral
 branch: main
-policy_revision: 2026-09-30-cdc-2.11.2-fleet-adoption
-policy_digest: 118c57ea352e32b5666b763956eb3deaae20be9abe9606ae45ed5c4c2fc20f11
-observed_at_utc: '2026-09-30T20:28:00Z'
+policy_revision: 2026-10-10-cdc-3.3.0-all330-g-spiral
+policy_digest: 121763b4bb2036f8f7ffc8598768f719453fe0b538effce003d0e67c7fd3e105
+observed_at_utc: '2026-10-10T15:17:30.476988Z'
 orchestration_origin: chat
-active_executor: 5c3f2a10-7e91-4a8b-9c22-cdc211200005
-lease_state: active
-executor_heartbeat_at_utc: '2026-09-30T20:28:00Z'
-execution_lease_until_utc: '2026-09-30T20:48:00Z'
+active_executor: none
+lease_state: released
+executor_heartbeat_at_utc: null
+execution_lease_until_utc: null
 waiting_external_kind: null
 waiting_external_id: null
 waiting_external_sha: null
@@ -17,8 +17,8 @@ operation_intent_ref: null
 operation_key: null
 control:
   execution_lease_ref: refs/heads/cdc/coordination
-  execution_lease_revision: 6a423a88b26be4c9dc8ecde07a41634c2a5579d1
-  executor_id: 5c3f2a10-7e91-4a8b-9c22-cdc211200005
+  execution_lease_revision: 9dbe68172d62fd7b0e0dc9ee93caaaca04c0d823
+  executor_id: null
   lease_generation: 4
   budget_ref: null
   recovery_snapshot_ref: null
@@ -42,7 +42,7 @@ next_action: Read cdc/coordination lease.json and adoptions/cdc-2.11.2.json for 
   adoption and release.
 resume_capsule_ref: coordination:resume.json
 execution_continuity:
-  invocation_id: chat-20260930-cdc2112-adoption-g-spiral-r3
+  invocation_id: null
   runnable_next_action: true
   meaningful_progress: true
   primitive_steps_since_progress: 0
@@ -58,3 +58,6 @@ This process-only update binds exact canonical CDC 2.11.2 while preserving repos
 
 CDC 2.4 durable operational handoff. Reconcile live repository, coordination, external operations and validation before acting.
 
+
+
+CDC 3.3.0 process migration: policy binding and actual released control readback above; product work and historical proof remain pending/unchanged.
