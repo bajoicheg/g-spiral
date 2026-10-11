@@ -2,9 +2,9 @@
 schema: development-work-status/v4
 repository: bajoicheg/g-spiral
 branch: main
-policy_revision: 2026-10-10-cdc-3.3.0-all330-g-spiral
-policy_digest: 121763b4bb2036f8f7ffc8598768f719453fe0b538effce003d0e67c7fd3e105
-observed_at_utc: '2026-10-10T15:17:30.476988Z'
+policy_revision: 2026-10-11-cdc-3.5.0-safe-g-spiral
+policy_digest: fda0d6be6dd47d93cfaff23c08ec6352f715ee572d54159e61fa08d19a1e601b
+observed_at_utc: '2026-10-11T10:44:22.074274Z'
 orchestration_origin: chat
 active_executor: none
 lease_state: released
@@ -17,9 +17,9 @@ operation_intent_ref: null
 operation_key: null
 control:
   execution_lease_ref: refs/heads/cdc/coordination
-  execution_lease_revision: 9dbe68172d62fd7b0e0dc9ee93caaaca04c0d823
+  execution_lease_revision: 00c5158edf7bd1ed0ae06428d4546498c2e431ab
   executor_id: null
-  lease_generation: 4
+  lease_generation: 5
   budget_ref: null
   recovery_snapshot_ref: null
   external_wait_ref: null
@@ -61,3 +61,8 @@ CDC 2.4 durable operational handoff. Reconcile live repository, coordination, ex
 
 
 CDC 3.3.0 process migration: policy binding and actual released control readback above; product work and historical proof remain pending/unchanged.
+
+
+## Current CDC 3.5.0 process provenance
+
+CDC3.5.0 process package/lock is current. Product phase, blocker, budgets and platform gates above are preserved; package CI is not product acceptance. The referenced control revision is the authentic prior released safe boundary; genuine new invocation, publication, lease release and physical closure are independently pinned in private per-consumer receipts. Schedulers remain PAUSED.
